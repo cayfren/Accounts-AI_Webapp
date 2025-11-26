@@ -368,13 +368,41 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
+            min-height: 0;
         }
 
         /* Messages Container */
         .messages-container {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 16px;
+            min-height: 0;
+        }
+
+        /* Custom Scrollbar */
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 10px;
+            border: 2px solid var(--bg);
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background-color: var(--subtext);
+        }
+
+        /* Firefox Scrollbar */
+        .messages-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
         }
 
         .message-bubble {
@@ -993,6 +1021,13 @@
                 render();
                 // Auto-fetch metrics on login
                 fetchMetrics();
+                // Focus on message input after login (longer delay to account for render)
+                setTimeout(() => {
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput) {
+                        messageInput.focus();
+                    }
+                }, 300);
             } else {
                 return "Invalid username or password";
             }
@@ -1758,6 +1793,13 @@
             if (input && input.value.trim()) {
                 sendTextMessage(input.value.trim());
                 input.value = '';
+                // Focus back on input after sending
+                setTimeout(() => {
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput) {
+                        messageInput.focus();
+                    }
+                }, 100);
             }
         }
 
