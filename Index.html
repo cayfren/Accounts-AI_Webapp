@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts-AI</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%2300BCD4'/><stop offset='100%25' style='stop-color:%232196F3'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23grad)'/><text x='50' y='72' font-family='Arial' font-size='60' font-weight='bold' fill='white' text-anchor='middle'>C</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Theme Variables */
+        body.light-mode {
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --text: #0F172A;
+            --subtext: #475569;
+            --border: #E0E7FF;
+            --user-bubble: #DBEAFE;
+            --user-bubble-border: #60A5FA;
+            --accent: #3B82F6;
+            --accent-disabled: #D1D5DB;
+            --input-bg: #F1F5F9;
+            --sidebar-bg: #FFFFFF;
+            --sidebar-hover: #F1F5F9;
+        }
+
+        body.dark-mode {
+            --bg: #0A0E1A;
+            --card: #121825;
+            --text: #E0E7FF;
+            --subtext: #818CF8;
+            --border: #1E293B;
+            --user-bubble: #1E3A8A;
+            --user-bubble-border: #3B82F6;
+            --accent: #06B6D4;
+            --accent-disabled: #1E293B;
+            --input-bg: #0F172A;
+            --sidebar-bg: #121825;
+            --sidebar-hover: #1E293B;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        /* Main Layout */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-title-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .metrics-container {
+            margin-top: 12px;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border-radius: 8px;
+        }
+
+        .metric-item {
+            margin-bottom: 8px;
+        }
+
+        .metric-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--subtext);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .metric-loading {
+            color: var(--subtext);
+            font-size: 16px;
+        }
+
+        .metric-update-info {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--subtext);
+        }
+
+        .metric-update-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .sidebar-reports {
+            padding: 16px;
+        }
+
+        .sidebar-reports-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--subtext);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-report-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-report-item:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .sidebar-report-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-report-label {
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        /* Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            height: 100vh;
+            max-width: 100%;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background-color: var(--input-bg);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: opacity 0.2s;
+            color: var(--text);
+        }
+
+        .icon-button:hover {
+            opacity: 0.8;
+        }
+
+        .text-button {
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 22px;
+            background-color: var(--input-bg);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .text-button:hover {
+            opacity: 0.8;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #00BCD4 0%, #2196F3 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-small {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            border-radius: 8px;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+        }
+
+        .login-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .login-subtitle {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--subtext);
+        }
+
+        .error-container {
+            background-color: #FEE2E2;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error-text {
+            color: #991B1B;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            background-color: var(--input-bg);
+            color: var(--text);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 16px;
+            border-radius: 10px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .login-button:hover {
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background-color: var(--input-bg);
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            margin: 20px auto 0;
+            display: block;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Chat wrapper - centered */
+        .chat-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Messages Container */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 8px 0;
+            word-wrap: break-word;
+        }
+
+        .message-bubble.user {
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            border: 1px solid var(--user-bubble-border);
+            margin-left: auto;
+        }
+
+        .message-bubble.bot {
+            align-self: flex-start;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+        }
+
+        .message-text {
+            font-size: 15px;
+            color: var(--text);
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .timestamp {
+            font-size: 11px;
+            color: var(--subtext);
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .download-button {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin: 8px 0;
+            width: fit-content;
+        }
+
+        .typing-text {
+            font-size: 14px;
+            color: var(--subtext);
+            margin-left: 8px;
+        }
+
+        /* Input Container */
+        .input-container {
+            background-color: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .attach-button {
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text);
+        }
+
+        .message-input {
+            flex: 1;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 16px;
+            background-color: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            outline: none;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .send-button:disabled {
+            background-color: var(--accent-disabled);
+            cursor: not-allowed;
+        }
+
+        .confirmation-container {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            padding: 8px;
+        }
+
+        .confirm-button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            min-height: 50px;
+        }
+
+        .yes-button {
+            background-color: #10B981;
+        }
+
+        .no-button {
+            background-color: #EF4444;
+        }
+
+        /* Reports Container */
+        .reports-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .reports-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .report-card {
+            aspect-ratio: 1.2;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background-color: var(--card);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-icon {
+            font-size: 40px;
+        }
+
+        .report-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text);
+        }
+
+        /* Report Detail */
+        .report-detail-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-toolbar {
+            background-color: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toolbar-button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text);
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .toolbar-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .timestamp-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--subtext);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .export-button {
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .export-pdf {
+            background-color: var(--accent);
+        }
+
+        .export-excel {
+            background-color: #10B981;
+        }
+
+        .report-content {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            background-color: var(--bg);
+        }
+
+        .coming-soon {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .coming-soon-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        .coming-soon-subtitle {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--subtext);
+        }
+
+        .back-button {
+            padding: 14px 24px;
+            border-radius: 10px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .loading-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-text {
+            margin-top: 12px;
+            font-size: 16px;
+            color: var(--subtext);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .chat-wrapper {
+                max-width: 100%;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .reports-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header-title {
+                font-size: 18px;
+            }
+
+            .icon-button {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+        }
+
+        /* File input hidden */
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div id="app"></div>
+
+    <script>
+        // Constants
+        const WEBHOOK_URL = "https://groovier-gideon-nonsuccessive.ngrok-free.dev/webhook-test/dfa3427f-710e-4840-bcb5-53a1eeabddda";
+        const CREDENTIALS = {
+            USERNAME: "Admin",
+            PASSWORD: "0000"
+        };
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+        const SIDEBAR_REPORTS = [
+            { id: "invoices", icon: "fa-file-invoice", iconColor: "#3B82F6", label: "Invoices Issued", apiName: "Invoices Issued" },
+            { id: "quotes", icon: "fa-clipboard", iconColor: "#06B6D4", label: "Quotes Issued", apiName: "Quotes Issued" },
+            { id: "balance_sheet", icon: "fa-scale-balanced", iconColor: "#8B5CF6", label: "Balance Sheet", apiName: "Balance Sheet" },
+            { id: "profit_loss", icon: "fa-chart-line", iconColor: "#10B981", label: "Profit & Loss", apiName: "Profit and Loss" }
+        ];
+
+        const REPORTS = [
+            { id: "balance_sheet", icon: "fa-scale-balanced", iconColor: "#8B5CF6", bgColor: "#F3E8FF", label: "Balance Sheet", apiName: "Balance Sheet" },
+            { id: "profit_loss", icon: "fa-chart-line", iconColor: "#10B981", bgColor: "#D1FAE5", label: "Profit & Loss", apiName: "Profit and Loss" },
+            { id: "receivables", icon: "fa-money-bill-trend-up", iconColor: "#F59E0B", bgColor: "#FEF3C7", label: "Customer Receivables", apiName: "receivables summary" },
+            { id: "payables", icon: "fa-money-bill-transfer", iconColor: "#EF4444", bgColor: "#FEE2E2", label: "Vendor Payables", apiName: "Vendor Payables" },
+            { id: "invoices", icon: "fa-file-invoice", iconColor: "#3B82F6", bgColor: "#DBEAFE", label: "Invoices Issued", apiName: "Invoices Issued" },
+            { id: "quotes", icon: "fa-clipboard", iconColor: "#06B6D4", bgColor: "#CFFAFE", label: "Quotes Issued", apiName: "Quotes Issued" },
+            { id: "bills", icon: "fa-receipt", iconColor: "#EC4899", bgColor: "#FCE7F3", label: "Bills Recorded", apiName: "Bills Recorded" },
+            { id: "purchase_orders", icon: "fa-box", iconColor: "#8B5CF6", bgColor: "#EDE9FE", label: "Purchase Orders", apiName: "Purchase Orders" },
+            { id: "customers", icon: "fa-users", iconColor: "#14B8A6", bgColor: "#CCFBF1", label: "List of Customers", apiName: "List of Customers" },
+            { id: "vendors", icon: "fa-building", iconColor: "#6366F1", bgColor: "#E0E7FF", label: "List of Vendors", apiName: "List of Vendors" },
+            { id: "accounts", icon: "fa-chart-bar", iconColor: "#F97316", bgColor: "#FFEDD5", label: "List of Accounts", apiName: "List of Accounts" },
+            { id: "journal", icon: "fa-book", iconColor: "#A855F7", bgColor: "#FAE8FF", label: "Journal Entries", apiName: "Journal Entries" }
+        ];
+
+        // State
+        let state = {
+            isLoggedIn: false,
+            isDark: false,
+            showReports: false,
+            selectedReport: null,
+            reportHtml: null,
+            reportName: "",
+            reportTimestamp: null,
+            isLoadingReport: false,
+            reportsCache: {},
+            messages: [],
+            clientId: "",
+            isSending: false,
+            isConfirmationMode: false,
+            pendingConfirmation: null,
+            metrics: {
+                turnover: '--',
+                netProfit: '--',
+                loading: false,
+                error: false,
+                lastUpdated: null
+            }
+        };
+
+        // Utility Functions
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatReportTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ', ' + date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatCurrency(amount) {
+            if (amount === '--') return '--';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Storage Functions
+        function saveToStorage(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function getFromStorage(key) {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : null;
+        }
+
+        // Metrics Functions
+        async function fetchMetrics() {
+            state.metrics.loading = true;
+            state.metrics.error = false;
+            render();
+
+            try {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const toDateValue = `${year}-${month}-${day}`;
+                const fromDate = `${year}-01-01`;
+
+                const payload = {
+                    client_id: state.clientId,
+                    message_type: 'report_request',
+                    text: 'report_view Profit and Loss',
+                    report_id: 'profit_loss',
+                    from_date: fromDate,
+                    to_date: toDateValue
+                };
+
+                const response = await axios.post(WEBHOOK_URL, payload, {
+                    timeout: 30000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.data.html) {
+                    // Parse HTML to extract metrics
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(response.data.html, 'text/html');
+
+                    // Try to find turnover and net profit from the HTML
+                    // This is a generic parser - adjust based on actual HTML structure
+                    const rows = doc.querySelectorAll('tr');
+                    let turnover = '--';
+                    let netProfit = '--';
+
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td, th');
+                        if (cells.length >= 2) {
+                            const label = cells[0].textContent.trim().toLowerCase();
+                            const value = cells[cells.length - 1].textContent.trim();
+
+                            // Match various possible labels
+                            if (label.includes('total revenue') || label.includes('total income') || label.includes('turnover')) {
+                                const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+                                if (!isNaN(numValue)) {
+                                    turnover = numValue;
+                                }
+                            }
+
+                            if (label.includes('net profit') || label.includes('net income')) {
+                                const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+                                if (!isNaN(numValue)) {
+                                    netProfit = numValue;
+                                }
+                            }
+                        }
+                    });
+
+                    state.metrics.turnover = turnover;
+                    state.metrics.netProfit = netProfit;
+                    state.metrics.lastUpdated = new Date().toISOString();
+                    state.metrics.error = false;
+
+                    saveToStorage('metrics', state.metrics);
+                } else {
+                    throw new Error('No data received');
+                }
+            } catch (error) {
+                console.error("Metrics fetch error:", error);
+                state.metrics.error = true;
+                state.metrics.turnover = '--';
+                state.metrics.netProfit = '--';
+            } finally {
+                state.metrics.loading = false;
+                render();
+            }
+        }
+
+        // Initialize App
+        function initializeApp() {
+            let clientId = getFromStorage('clientId');
+            if (!clientId) {
+                clientId = generateUUID();
+                saveToStorage('clientId', clientId);
+            }
+            state.clientId = clientId;
+
+            const theme = getFromStorage('theme');
+            if (theme) {
+                state.isDark = theme === 'dark';
+                document.body.className = state.isDark ? 'dark-mode' : 'light-mode';
+            }
+
+            const messages = getFromStorage('messages');
+            if (messages) {
+                state.messages = messages;
+            } else {
+                state.messages = [{
+                    id: 'welcome',
+                    role: 'bot',
+                    type: 'text',
+                    text: 'Welcome! I\'m your AI accountant. You can ask me to:\n• Create an invoice\n• Generate quotes\n• Pull Profit & Loss report\n• View Balance Sheet\n• Check customer receivables\n• Review vendor payables\n• Or any other accounting tasks you would like to perform...\n\nWhat would you like to do?',
+                    timestamp: new Date().toISOString()
+                }];
+                saveToStorage('messages', state.messages);
+            }
+
+            const reportsCache = getFromStorage('reportsCache');
+            if (reportsCache) {
+                state.reportsCache = reportsCache;
+            }
+
+            const savedMetrics = getFromStorage('metrics');
+            if (savedMetrics) {
+                state.metrics = { ...state.metrics, ...savedMetrics };
+            }
+
+            render();
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            state.isDark = !state.isDark;
+            document.body.className = state.isDark ? 'dark-mode' : 'light-mode';
+            saveToStorage('theme', state.isDark ? 'dark' : 'light');
+            render();
+        }
+
+        // Login
+        function handleLogin(username, password) {
+            if (username === CREDENTIALS.USERNAME && password === CREDENTIALS.PASSWORD) {
+                state.isLoggedIn = true;
+                render();
+                // Auto-fetch metrics on login
+                fetchMetrics();
+            } else {
+                return "Invalid username or password";
+            }
+        }
+
+        function handleLogout() {
+            if (confirm("Are you sure you want to logout?")) {
+                state.isLoggedIn = false;
+                render();
+            }
+        }
+
+        // Clear Chat
+        function clearChat() {
+            if (confirm("Are you sure you want to delete all messages? This cannot be undone.")) {
+                state.messages = [{
+                    id: 'welcome-' + Date.now(),
+                    role: 'bot',
+                    type: 'text',
+                    text: 'Chat cleared. I\'m your AI accountant. You can ask me to:\n• Create an invoice\n• Generate quotes\n• Pull Profit & Loss report\n• View Balance Sheet\n• Check customer receivables\n• Review vendor payables\n• Or any other accounting tasks you would like to perform...\n\nWhat would you like to do?',
+                    timestamp: new Date().toISOString()
+                }];
+                saveToStorage('messages', state.messages);
+                render();
+            }
+        }
+
+        // Copy to Clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Copied to clipboard");
+            });
+        }
+
+        // Bot Response Handler
+        function handleBotResponse(data) {
+            console.log("Bot response:", data);
+
+            // CONFIRMATION REQUEST
+            if (data.awaiting_confirmation === true) {
+                const botMessage = {
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: typeof data.message === 'string' ? data.message : data.message?.text || 'Please confirm',
+                    timestamp: new Date().toISOString()
+                };
+
+                state.messages.push(botMessage);
+                state.isConfirmationMode = true;
+                state.pendingConfirmation = {
+                    confirmation_type: data.confirmation_type || '',
+                    customer_id: data.customer_id,
+                    customer_name: data.customer_name,
+                    invoice_id: data.invoice_id
+                };
+                saveToStorage('messages', state.messages);
+                render();
+                return;
+            }
+
+            // FILE RESPONSE
+            if (data.file_base64 || data.base64) {
+                const base64 = data.file_base64 || data.base64;
+                const filename = data.filename || 'document.pdf';
+                const contentType = data.content_type || 'application/pdf';
+
+                const botMessage = {
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'file',
+                    text: `${filename} is ready`,
+                    file: {
+                        name: filename,
+                        mime: contentType,
+                        size: 0,
+                        url: `data:${contentType};base64,${base64}`
+                    },
+                    timestamp: new Date().toISOString()
+                };
+
+                state.messages.push(botMessage);
+                saveToStorage('messages', state.messages);
+                render();
+                return;
+            }
+
+            // TEXT RESPONSE
+            let messageText = null;
+            if (data.message && typeof data.message === 'string') {
+                messageText = data.message;
+            } else if (data.message && typeof data.message === 'object' && data.message.text) {
+                messageText = data.message.text;
+            } else if (data.text) {
+                messageText = data.text;
+            } else if (data.output) {
+                messageText = data.output;
+            }
+
+            if (messageText) {
+                const botMessage = {
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: messageText,
+                    timestamp: new Date().toISOString()
+                };
+
+                state.messages.push(botMessage);
+                saveToStorage('messages', state.messages);
+                render();
+            }
+        }
+
+        // Send Text Message
+        async function sendTextMessage(text) {
+            if (!text.trim() || state.isSending) return;
+
+            const userMessage = {
+                id: generateUUID(),
+                role: 'user',
+                type: 'text',
+                text: text,
+                timestamp: new Date().toISOString()
+            };
+
+            state.messages.push(userMessage);
+            state.isSending = true;
+            saveToStorage('messages', state.messages);
+            render();
+
+            try {
+                const payload = {
+                    client_id: state.clientId,
+                    message_type: 'text',
+                    text: text,
+                    user_message_id: userMessage.id
+                };
+
+                const response = await axios.post(WEBHOOK_URL, payload, {
+                    timeout: 30000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                handleBotResponse(response.data);
+            } catch (error) {
+                console.error("Send error:", error);
+                state.messages.push({
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: "Sorry, I couldn't process your message. Please try again.",
+                    timestamp: new Date().toISOString()
+                });
+                saveToStorage('messages', state.messages);
+                render();
+            } finally {
+                state.isSending = false;
+                render();
+            }
+        }
+
+        // Handle Confirmation
+        async function handleConfirmation(answer) {
+            if (!state.pendingConfirmation) return;
+
+            const userMessage = {
+                id: generateUUID(),
+                role: 'user',
+                type: 'text',
+                text: answer.toUpperCase(),
+                timestamp: new Date().toISOString()
+            };
+
+            state.messages.push(userMessage);
+            state.isConfirmationMode = false;
+            state.isSending = true;
+            saveToStorage('messages', state.messages);
+            render();
+
+            try {
+                const payload = {
+                    client_id: state.clientId,
+                    message_type: 'text',
+                    text: answer,
+                    confirmation_type: state.pendingConfirmation.confirmation_type,
+                    customer_id: state.pendingConfirmation.customer_id || null,
+                    invoice_id: state.pendingConfirmation.invoice_id || null
+                };
+
+                const response = await axios.post(WEBHOOK_URL, payload, {
+                    timeout: 30000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                handleBotResponse(response.data);
+            } catch (error) {
+                console.error("Confirmation error:", error);
+                state.messages.push({
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: "Sorry, I couldn't process your response. Please try again.",
+                    timestamp: new Date().toISOString()
+                });
+                saveToStorage('messages', state.messages);
+                render();
+            } finally {
+                state.pendingConfirmation = null;
+                state.isSending = false;
+                render();
+            }
+        }
+
+        // Send File
+        async function sendFile(file) {
+            if (state.isSending) return;
+
+            if (file.size > MAX_FILE_SIZE) {
+                if (!confirm(`This file is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Large files may take longer to process. Continue?`)) {
+                    return;
+                }
+            }
+
+            const userMessage = {
+                id: generateUUID(),
+                role: 'user',
+                type: 'file',
+                file: {
+                    name: file.name,
+                    mime: file.type || 'application/octet-stream',
+                    size: file.size,
+                    url: ''
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            state.messages.push(userMessage);
+            state.isSending = true;
+            saveToStorage('messages', state.messages);
+            render();
+
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64 = reader.result.split(',')[1];
+
+                try {
+                    const response = await axios.post(WEBHOOK_URL, {
+                        client_id: state.clientId,
+                        message_type: 'file',
+                        file: {
+                            name: file.name,
+                            mime: file.type || 'application/octet-stream',
+                            size: file.size,
+                            base64: base64
+                        },
+                        user_message_id: userMessage.id
+                    }, { timeout: 60000 });
+
+                    handleBotResponse(response.data);
+                } catch (error) {
+                    console.error("File send error:", error);
+                    state.messages.push({
+                        id: generateUUID(),
+                        role: 'bot',
+                        type: 'text',
+                        text: "Sorry, I couldn't process your file. Please try again.",
+                        timestamp: new Date().toISOString()
+                    });
+                    saveToStorage('messages', state.messages);
+                    render();
+                } finally {
+                    state.isSending = false;
+                    render();
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Reports
+        async function fetchReportData(reportId, forceRefresh = false) {
+            const previousHtml = state.reportHtml;
+
+            if (forceRefresh) {
+                state.reportHtml = null;
+            }
+
+            state.isLoadingReport = true;
+            render();
+
+            try {
+                const report = REPORTS.find(r => r.id === reportId);
+                const reportApiName = report?.apiName || reportId;
+                const today = new Date();
+                const formattedDate = today.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const toDateValue = `${year}-${month}-${day}`;
+
+                let requestText;
+                let payload;
+
+                if (reportId === "profit_loss") {
+                    requestText = `report_view ${reportApiName}`;
+                    const fromDate = `${year}-01-01`;
+                    payload = {
+                        client_id: state.clientId,
+                        message_type: 'report_request',
+                        text: requestText,
+                        report_id: reportId,
+                        from_date: fromDate,
+                        to_date: toDateValue
+                    };
+                } else if (reportId === "balance_sheet" || reportId === "receivables") {
+                    requestText = `report_view ${reportApiName}`;
+                    payload = {
+                        client_id: state.clientId,
+                        message_type: 'report_request',
+                        text: requestText,
+                        report_id: reportId,
+                        to_date: toDateValue
+                    };
+                } else {
+                    requestText = `report_view ${reportApiName} as of ${formattedDate}`;
+                    payload = {
+                        client_id: state.clientId,
+                        message_type: 'report_request',
+                        text: requestText,
+                        report_id: reportId
+                    };
+                }
+
+                const response = await axios.post(WEBHOOK_URL, payload, {
+                    timeout: 30000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.data.html) {
+                    const timestamp = new Date().toISOString();
+                    const reportData = {
+                        html: response.data.html,
+                        reportName: response.data.report_name || report?.label || reportId,
+                        reportId,
+                        timestamp
+                    };
+
+                    state.reportHtml = reportData.html;
+                    state.reportName = reportData.reportName;
+                    state.reportTimestamp = timestamp;
+                    state.reportsCache[reportId] = reportData;
+                    saveToStorage('reportsCache', state.reportsCache);
+                } else {
+                    if (forceRefresh && previousHtml) {
+                        state.reportHtml = previousHtml;
+                        alert("Update Failed: No data available. Showing previous version.");
+                    } else {
+                        alert("No Data: This report has no data available yet.");
+                        state.selectedReport = null;
+                    }
+                }
+            } catch (error) {
+                console.error("Report fetch error:", error);
+                if (forceRefresh && previousHtml) {
+                    state.reportHtml = previousHtml;
+                    alert("Update Failed: Failed to load report. Showing previous version.");
+                } else {
+                    alert("Error: Failed to load report. Please try again.");
+                    state.selectedReport = null;
+                }
+            } finally {
+                state.isLoadingReport = false;
+                render();
+            }
+        }
+
+        function handleReportClick(reportId) {
+            state.selectedReport = reportId;
+            state.showReports = true;
+
+            const configuredReports = ["profit_loss", "balance_sheet", "receivables", "invoices", "quotes"];
+
+            if (!configuredReports.includes(reportId)) {
+                state.reportHtml = null;
+                state.reportName = "";
+                state.reportTimestamp = null;
+                render();
+                return;
+            }
+
+            const cachedReport = state.reportsCache[reportId];
+            if (cachedReport) {
+                state.reportHtml = cachedReport.html;
+                state.reportName = cachedReport.reportName;
+                state.reportTimestamp = cachedReport.timestamp;
+                render();
+            } else {
+                state.reportHtml = null;
+                state.reportName = "";
+                state.reportTimestamp = null;
+                render();
+                fetchReportData(reportId);
+            }
+        }
+
+        function exportToPDF() {
+            if (!state.reportHtml) return;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(state.reportHtml);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function parseHTMLTable(html) {
+            const rows = [];
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            const tableRows = tempDiv.querySelectorAll('tr');
+            tableRows.forEach(tr => {
+                const cells = [];
+                const tableCells = tr.querySelectorAll('td, th');
+                tableCells.forEach(cell => {
+                    cells.push(cell.textContent.trim());
+                });
+                if (cells.length > 0) {
+                    rows.push(cells);
+                }
+            });
+
+            return rows;
+        }
+
+        function exportToExcel() {
+            if (!state.reportHtml) return;
+
+            try {
+                const tableData = parseHTMLTable(state.reportHtml);
+
+                if (tableData.length === 0) {
+                    alert("Error: No table data found in report");
+                    return;
+                }
+
+                const ws = XLSX.utils.aoa_to_sheet(tableData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Report");
+
+                const filename = `${state.reportName.replace(/\s+/g, '_')}.xlsx`;
+                XLSX.writeFile(wb, filename);
+
+                alert("Success: Excel file exported successfully!");
+            } catch (error) {
+                console.error("Excel export error:", error);
+                alert("Error: Failed to export Excel file");
+            }
+        }
+
+        function downloadFile(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        // Render Functions
+        function renderSidebar() {
+            return `
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title-container">
+                            <div class="logo logo-small">C</div>
+                            <div class="sidebar-title">Accounts-AI</div>
+                        </div>
+                        <div class="metrics-container">
+                            <div class="metric-item">
+                                <div class="metric-label">Total Turnover</div>
+                                <div class="metric-value ${state.metrics.loading ? 'metric-loading' : ''}">
+                                    ${state.metrics.loading ? 'Loading...' : (state.metrics.error ? '--' : formatCurrency(state.metrics.turnover))}
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-label">Net Profit</div>
+                                <div class="metric-value ${state.metrics.loading ? 'metric-loading' : ''}">
+                                    ${state.metrics.loading ? 'Loading...' : (state.metrics.error ? '--' : formatCurrency(state.metrics.netProfit))}
+                                </div>
+                            </div>
+                            ${state.metrics.lastUpdated ? `
+                                <div class="metric-update-info">
+                                    Last updated: ${formatTime(state.metrics.lastUpdated)}
+                                    <br>
+                                    <span class="metric-update-link" onclick="fetchMetrics()">Click to update</span>
+                                </div>
+                            ` : (state.metrics.error ? `
+                                <div class="metric-update-info">
+                                    Failed to load data.
+                                    <br>
+                                    <span class="metric-update-link" onclick="fetchMetrics()">Click to retry</span>
+                                </div>
+                            ` : '')}
+                        </div>
+                    </div>
+                    <div class="sidebar-reports">
+                        <div class="sidebar-reports-title">Quick Reports</div>
+                        ${SIDEBAR_REPORTS.map(report => `
+                            <div class="sidebar-report-item" onclick="handleReportClick('${report.id}')">
+                                <i class="fa-solid ${report.icon} sidebar-report-icon" style="color: ${report.iconColor}"></i>
+                                <div class="sidebar-report-label">${report.label}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLogin() {
+            return `
+                <div class="login-container">
+                    <div class="login-box">
+                        <div class="logo" style="margin: 0 auto 20px;">C</div>
+                        <h1 class="login-title">Accounts-AI</h1>
+                        <p class="login-subtitle">Sign in to continue</p>
+                        <div id="loginError" class="error-container hidden">
+                            <p class="error-text" id="errorText"></p>
+                        </div>
+                        <input type="text" id="username" class="login-input" placeholder="Username" autocomplete="username">
+                        <input type="password" id="password" class="login-input" placeholder="Password" autocomplete="current-password">
+                        <button class="login-button" onclick="handleLoginSubmit()">Sign In</button>
+                        <button class="theme-toggle" onclick="toggleTheme()">
+                            <i class="fa-solid ${state.isDark ? 'fa-sun' : 'fa-moon'}"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMessages() {
+            let messagesHtml = '';
+            state.messages.forEach(msg => {
+                const bubbleClass = msg.role === 'user' ? 'user' : 'bot';
+                messagesHtml += `<div class="message-bubble ${bubbleClass}">`;
+
+                if (msg.type === 'text' && msg.text) {
+                    messagesHtml += `<div class="message-text">${escapeHtml(msg.text)}</div>`;
+                }
+
+                if (msg.type === 'file' && msg.file) {
+                    const icon = msg.role === 'user' ? '<i class="fa-solid fa-paperclip"></i>' : '<i class="fa-solid fa-file-pdf"></i>';
+                    messagesHtml += `<div class="message-text">${icon} ${escapeHtml(msg.file.name)}</div>`;
+                    if (msg.text && msg.text !== msg.file.name) {
+                        messagesHtml += `<div class="message-text" style="margin-top: 4px;">${escapeHtml(msg.text)}</div>`;
+                    }
+                    if (msg.file.url) {
+                        const buttonText = msg.file.url.startsWith('data:') ? 'Open PDF' : 'Download';
+                        messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.file.url}', '${escapeHtml(msg.file.name)}')">${buttonText}</button>`;
+                    }
+                }
+
+                messagesHtml += `<div class="timestamp">${formatTime(msg.timestamp)}</div>`;
+                messagesHtml += `</div>`;
+            });
+
+            if (state.isSending && !state.isConfirmationMode) {
+                messagesHtml += `
+                    <div class="typing-indicator">
+                        <div class="spinner"></div>
+                        <span class="typing-text">AI is typing...</span>
+                    </div>
+                `;
+            }
+
+            return messagesHtml;
+        }
+
+        function renderInputArea() {
+            if (state.isConfirmationMode) {
+                return `
+                    <div class="confirmation-container">
+                        <button class="confirm-button yes-button" onclick="handleConfirmation('yes')" ${state.isSending ? 'disabled' : ''}>
+                            ${state.isSending ? '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>' : 'YES'}
+                        </button>
+                        <button class="confirm-button no-button" onclick="handleConfirmation('no')" ${state.isSending ? 'disabled' : ''}>
+                            ${state.isSending ? '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>' : 'NO'}
+                        </button>
+                    </div>
+                `;
+            }
+
+            return `
+                <button class="attach-button" onclick="document.getElementById('fileInput').click()" ${state.isSending ? 'disabled' : ''}>
+                    <i class="fa-solid fa-paperclip"></i>
+                </button>
+                <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls" onchange="handleFileSelect(event)">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type your message..." ${state.isSending ? 'disabled' : ''}>
+                <button class="send-button" id="sendButton" onclick="handleSendClick()" ${state.isSending ? 'disabled' : ''}>
+                    ${state.isSending ? '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>' : 'Send'}
+                </button>
+            `;
+        }
+
+        function renderReportsGrid() {
+            let reportsHtml = '<div class="reports-title">Reports</div><div class="reports-grid">';
+
+            REPORTS.forEach(report => {
+                reportsHtml += `
+                    <div class="report-card" onclick="handleReportClick('${report.id}')">
+                        <i class="fa-solid ${report.icon} report-icon" style="color: ${report.iconColor}"></i>
+                        <div class="report-label">${report.label}</div>
+                    </div>
+                `;
+            });
+
+            reportsHtml += '</div>';
+            return reportsHtml;
+        }
+
+        function renderReportDetail() {
+            if (state.isLoadingReport) {
+                return `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Loading report...</div>
+                    </div>
+                `;
+            }
+
+            if (state.reportHtml) {
+                return `
+                    <div class="report-toolbar">
+                        <div class="toolbar-left">
+                            <button class="toolbar-button" onclick="state.selectedReport = null; state.reportHtml = null; state.reportTimestamp = null; state.showReports = false; render();">← Back</button>
+                            <button class="toolbar-button" onclick="fetchReportData('${state.selectedReport}', true)" ${state.isLoadingReport ? 'disabled' : ''}>
+                                <i class="fa-solid fa-rotate"></i> Update
+                            </button>
+                        </div>
+                        ${state.reportTimestamp ? `<span class="timestamp-text">Last updated: ${formatReportTimestamp(state.reportTimestamp)}</span>` : ''}
+                        <div class="export-buttons">
+                            <button class="export-button export-pdf" onclick="exportToPDF()">
+                                <i class="fa-solid fa-file-pdf"></i> PDF
+                            </button>
+                            <button class="export-button export-excel" onclick="exportToExcel()">
+                                <i class="fa-solid fa-file-excel"></i> Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="report-content">
+                        ${state.reportHtml}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="coming-soon">
+                    <div class="coming-soon-title">Coming Soon</div>
+                    <div class="coming-soon-subtitle">This report is under development</div>
+                    <button class="back-button" onclick="state.selectedReport = null; state.showReports = false; render();">← Back</button>
+                </div>
+            `;
+        }
+
+        function renderMain() {
+            return `
+                <div class="container">
+                    <div class="header">
+                        <div class="header-title">${state.showReports ? 'Reports' : 'Chat'}</div>
+                        <div class="header-buttons">
+                            ${state.showReports ? `
+                                <button class="text-button" onclick="state.showReports = false; render();" title="Back to Chat">
+                                    <i class="fa-solid fa-comments"></i>
+                                    <span>Back to Chat</span>
+                                </button>
+                            ` : `
+                                <button class="text-button" onclick="state.showReports = true; render();" title="Reports">
+                                    <i class="fa-solid fa-chart-bar"></i>
+                                    <span>Reports</span>
+                                </button>
+                            `}
+                            <button class="icon-button" onclick="clearChat()" title="Clear Chat">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            <button class="icon-button" onclick="toggleTheme()" title="Toggle Theme">
+                                <i class="fa-solid ${state.isDark ? 'fa-sun' : 'fa-moon'}"></i>
+                            </button>
+                            <button class="icon-button" onclick="handleLogout()" title="Logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="main-content">
+                        ${state.showReports ? (
+                            state.selectedReport ?
+                                `<div class="report-detail-container">${renderReportDetail()}</div>` :
+                                `<div class="reports-container">${renderReportsGrid()}</div>`
+                        ) : `
+                            <div class="chat-wrapper">
+                                <div class="messages-container" id="messagesContainer">
+                                    ${renderMessages()}
+                                </div>
+                                <div class="input-container">
+                                    ${renderInputArea()}
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+
+            if (!state.isLoggedIn) {
+                app.innerHTML = renderLogin();
+            } else {
+                app.innerHTML = `
+                    <div class="app-layout">
+                        ${renderSidebar()}
+                        ${renderMain()}
+                    </div>
+                `;
+
+                if (!state.showReports) {
+                    const messagesContainer = document.getElementById('messagesContainer');
+                    if (messagesContainer) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput && !state.isSending) {
+                        messageInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter' && !state.isSending) {
+                                handleSendClick();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        // Event Handlers
+        function handleLoginSubmit() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const error = handleLogin(username, password);
+
+            if (error) {
+                const errorContainer = document.getElementById('loginError');
+                const errorText = document.getElementById('errorText');
+                errorContainer.classList.remove('hidden');
+                errorText.textContent = error;
+            }
+        }
+
+        function handleSendClick() {
+            const input = document.getElementById('messageInput');
+            if (input && input.value.trim()) {
+                sendTextMessage(input.value.trim());
+                input.value = '';
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                sendFile(file);
+                event.target.value = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Handle Enter key in login
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !state.isLoggedIn) {
+                handleLoginSubmit();
+            }
+        });
+    </script>
+</body>
+</html>
