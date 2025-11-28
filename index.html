@@ -682,8 +682,17 @@
             flex: 1;
             overflow: auto;
             padding: 20px;
-            background-color: var(--bg);
+            background-color: #FFFFFF;
             min-height: 0;
+        }
+
+        /* Report content should always use light background and dark text */
+        .report-content * {
+            color: inherit !important;
+        }
+
+        .report-content table {
+            background-color: #FFFFFF !important;
         }
 
         .coming-soon {
@@ -900,13 +909,80 @@
             return item ? JSON.parse(item) : null;
         }
 
-        // Metrics Functions
+        // Metrics Functions - Extract from cached Profit & Loss report
+        function extractMetricsFromHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const rows = doc.querySelectorAll('tr');
+            let turnover = '--';
+            let netProfit = '--';
+
+            console.log('🔍 Parsing metrics from HTML...');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td, th');
+                if (cells.length >= 2) {
+                    const label = cells[0].textContent.trim().toLowerCase();
+                    const value = cells[cells.length - 1].textContent.trim();
+
+                    console.log('Row label:', label, '| Value:', value);
+
+                    // Match various possible labels for revenue/turnover
+                    if (label.includes('total operating income') ||
+                        label.includes('total revenue') ||
+                        label.includes('total income') ||
+                        label.includes('gross revenue') ||
+                        label.includes('operating income') ||
+                        label.includes('turnover')) {
+                        const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(numValue)) {
+                            console.log('✅ Found turnover:', numValue);
+                            turnover = numValue;
+                        }
+                    }
+
+                    // Match various possible labels for net profit
+                    if (label.includes('net profit') ||
+                        label.includes('net income') ||
+                        label.includes('net profit/loss') ||
+                        label.includes('profit for the period') ||
+                        label.includes('profit after tax')) {
+                        const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(numValue)) {
+                            console.log('✅ Found net profit:', numValue);
+                            netProfit = numValue;
+                        }
+                    }
+                }
+            });
+
+            console.log('Final metrics - Turnover:', turnover, '| Net Profit:', netProfit);
+            return { turnover, netProfit };
+        }
+
         async function fetchMetrics() {
             state.metrics.loading = true;
             state.metrics.error = false;
             render();
 
             try {
+                // First, check if we have cached P&L report
+                const cachedPL = state.reportsCache['profit_loss'];
+                if (cachedPL && cachedPL.html) {
+                    console.log('📊 Using cached Profit & Loss report for metrics');
+                    const metrics = extractMetricsFromHTML(cachedPL.html);
+                    state.metrics.turnover = metrics.turnover;
+                    state.metrics.netProfit = metrics.netProfit;
+                    state.metrics.lastUpdated = cachedPL.timestamp;
+                    state.metrics.error = false;
+                    state.metrics.loading = false;
+                    saveToStorage('metrics', state.metrics);
+                    render();
+                    return;
+                }
+
+                // If no cache, fetch fresh data
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -929,41 +1005,10 @@
                 });
 
                 if (response.data.html) {
-                    // Parse HTML to extract metrics
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(response.data.html, 'text/html');
+                    const metrics = extractMetricsFromHTML(response.data.html);
 
-                    // Try to find turnover and net profit from the HTML
-                    // This is a generic parser - adjust based on actual HTML structure
-                    const rows = doc.querySelectorAll('tr');
-                    let turnover = '--';
-                    let netProfit = '--';
-
-                    rows.forEach(row => {
-                        const cells = row.querySelectorAll('td, th');
-                        if (cells.length >= 2) {
-                            const label = cells[0].textContent.trim().toLowerCase();
-                            const value = cells[cells.length - 1].textContent.trim();
-
-                            // Match various possible labels
-                            if (label.includes('total revenue') || label.includes('total income') || label.includes('turnover')) {
-                                const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
-                                if (!isNaN(numValue)) {
-                                    turnover = numValue;
-                                }
-                            }
-
-                            if (label.includes('net profit') || label.includes('net income')) {
-                                const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
-                                if (!isNaN(numValue)) {
-                                    netProfit = numValue;
-                                }
-                            }
-                        }
-                    });
-
-                    state.metrics.turnover = turnover;
-                    state.metrics.netProfit = netProfit;
+                    state.metrics.turnover = metrics.turnover;
+                    state.metrics.netProfit = metrics.netProfit;
                     state.metrics.lastUpdated = new Date().toISOString();
                     state.metrics.error = false;
 
