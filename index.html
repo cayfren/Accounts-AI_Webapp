@@ -677,21 +677,42 @@
             background-color: #10B981;
         }
 
-        /* FIXED: Report content now scrolls properly */
+        /* FIXED: Report content now scrolls properly and uses its own theme */
         .report-content {
             flex: 1;
             overflow: auto;
             padding: 20px;
             background-color: #FFFFFF;
             min-height: 0;
+            color: #000000;
         }
 
-        /* Report content should always use light background and dark text */
-        .report-content * {
-            color: inherit !important;
+        /* Force all text in report to be dark for readability on white background */
+        .report-content *,
+        .report-content h1,
+        .report-content h2,
+        .report-content h3,
+        .report-content h4,
+        .report-content h5,
+        .report-content h6,
+        .report-content p,
+        .report-content div,
+        .report-content span,
+        .report-content td,
+        .report-content th,
+        .report-content strong,
+        .report-content b {
+            color: #000000 !important;
+            background-color: transparent !important;
         }
 
         .report-content table {
+            background-color: #FFFFFF !important;
+        }
+
+        /* Ensure table cells have white background */
+        .report-content td,
+        .report-content th {
             background-color: #FFFFFF !important;
         }
 
@@ -929,14 +950,20 @@
                     console.log('Row label:', label, '| Value:', value);
 
                     // Match various possible labels for revenue/turnover
-                    if (label.includes('total operating income') ||
-                        label.includes('total revenue') ||
-                        label.includes('total income') ||
-                        label.includes('gross revenue') ||
-                        label.includes('operating income') ||
-                        label.includes('turnover')) {
+                    // Priority: Total Operating Income is the main one
+                    if (label.includes('total operating income')) {
                         const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
                         if (!isNaN(numValue)) {
+                            console.log('✅ Found turnover (Total Operating Income):', numValue);
+                            turnover = numValue;
+                        }
+                    } else if (label.includes('total revenue') ||
+                               label.includes('total income') ||
+                               label.includes('gross revenue') ||
+                               label.includes('operating income') ||
+                               label.includes('turnover')) {
+                        const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(numValue) && turnover === '--') {
                             console.log('✅ Found turnover:', numValue);
                             turnover = numValue;
                         }
