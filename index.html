@@ -1677,7 +1677,7 @@
                 return `
                     <div class="report-toolbar">
                         <div class="toolbar-left">
-                            <button class="toolbar-button" onclick="state.selectedReport = null; state.reportHtml = null; state.reportTimestamp = null; state.showReports = false; render();">← Back</button>
+                            <button class="toolbar-button" onclick="state.selectedReport = null; state.reportHtml = null; state.reportTimestamp = null; render();">← Back</button>
                             <button class="toolbar-button" onclick="fetchReportData('${state.selectedReport}', true)" ${state.isLoadingReport ? 'disabled' : ''}>
                                 <i class="fa-solid fa-rotate"></i> Update
                             </button>
@@ -1698,13 +1698,8 @@
                 `;
             }
 
-            return `
-                <div class="coming-soon">
-                    <div class="coming-soon-title">Coming Soon</div>
-                    <div class="coming-soon-subtitle">This report is under development</div>
-                    <button class="back-button" onclick="state.selectedReport = null; state.showReports = false; render();">← Back</button>
-                </div>
-            `;
+            // No coming soon - all reports are configured
+            return '';
         }
 
         function renderMain() {
