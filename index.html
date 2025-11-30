@@ -1533,13 +1533,14 @@
                         to_date: toDateValue
                     };
                 } else {
-                    // All other reports - no date parameters (backend handles limits)
+                    // All other reports - send to_date as current date
                     requestText = `report_view ${reportApiName}`;
                     payload = {
                         client_id: state.clientId,
                         message_type: 'report_request',
                         text: requestText,
-                        report_id: reportId
+                        report_id: reportId,
+                        to_date: toDateValue
                     };
                 }
 
