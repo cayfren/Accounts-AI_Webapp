@@ -1662,7 +1662,17 @@
             }
         }
 
-        function downloadFile(url, filename) {
+        function downloadFile(messageId) {
+            // Find the message by ID
+            const message = state.messages.find(msg => msg.id === messageId);
+            if (!message || !message.file || !message.file.url) {
+                alert('File not found');
+                return;
+            }
+
+            const url = message.file.url;
+            const filename = message.file.name;
+
             // If it's a PDF (data URL or blob URL), open in new tab for viewing
             if (url.startsWith('data:application/pdf') || url.startsWith('blob:')) {
                 window.open(url, '_blank');
@@ -1764,7 +1774,7 @@
                     }
                     if (msg.file.url) {
                         const buttonText = (msg.file.url.startsWith('data:') || msg.file.url.startsWith('blob:')) ? 'View PDF' : 'Download';
-                        messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.file.url}', '${escapeHtml(msg.file.name)}')">${buttonText}</button>`;
+                        messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.id}')">${buttonText}</button>`;
                     }
                 }
 
@@ -1947,6 +1957,9 @@
                                 handleSendClick();
                             }
                         });
+
+                        // Auto-focus input field
+                        messageInput.focus();
                     }
                 }
             }
