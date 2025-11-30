@@ -1673,8 +1673,23 @@
             const url = message.file.url;
             const filename = message.file.name;
 
-            // If it's a PDF (data URL or blob URL), open in new tab for viewing
-            if (url.startsWith('data:application/pdf') || url.startsWith('blob:')) {
+            // If it's a data URL, convert to blob URL first (browsers block data URLs in new tabs)
+            if (url.startsWith('data:')) {
+                // Convert data URL to blob
+                const byteString = atob(url.split(',')[1]);
+                const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeString });
+                const blobUrl = URL.createObjectURL(blob);
+
+                // Open blob URL in new tab
+                window.open(blobUrl, '_blank');
+            } else if (url.startsWith('blob:')) {
+                // Already a blob URL, open directly
                 window.open(url, '_blank');
             } else {
                 // Otherwise download the file
