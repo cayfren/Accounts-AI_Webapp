@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%2300BCD4'/><stop offset='100%25' style='stop-color:%232196F3'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23grad)'/><text x='50' y='72' font-family='Arial' font-size='60' font-weight='bold' fill='white' text-anchor='middle'>C</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -510,6 +511,12 @@
             color: var(--text);
             border: 1px solid var(--border);
             outline: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            overflow-y: auto;
+            line-height: 1.5;
         }
 
         .send-button {
@@ -1152,6 +1159,76 @@
             });
         }
 
+        // Convert HTML to PDF
+        async function convertHTMLToPDF(htmlContent, reportName) {
+            try {
+                // Show loading message
+                const loadingMessage = {
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: 'Converting to PDF...',
+                    timestamp: new Date().toISOString()
+                };
+                state.messages.push(loadingMessage);
+                saveToStorage('messages', state.messages);
+                render();
+
+                // Create a temporary container for the HTML
+                const tempContainer = document.createElement('div');
+                tempContainer.innerHTML = htmlContent;
+                tempContainer.style.padding = '20px';
+                tempContainer.style.backgroundColor = '#ffffff';
+                tempContainer.style.color = '#000000';
+
+                // Configure PDF options
+                const opt = {
+                    margin: 10,
+                    filename: `${reportName.replace(/\s+/g, '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                // Convert to PDF blob
+                const pdfBlob = await html2pdf().set(opt).from(tempContainer).output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // Remove loading message
+                state.messages = state.messages.filter(msg => msg.id !== loadingMessage.id);
+
+                // Add PDF message
+                const botMessage = {
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'file',
+                    text: `${reportName} is ready`,
+                    file: {
+                        name: `${reportName}.pdf`,
+                        mime: 'application/pdf',
+                        size: pdfBlob.size,
+                        url: pdfUrl
+                    },
+                    timestamp: new Date().toISOString()
+                };
+
+                state.messages.push(botMessage);
+                saveToStorage('messages', state.messages);
+                render();
+            } catch (error) {
+                console.error("PDF conversion error:", error);
+                state.messages.push({
+                    id: generateUUID(),
+                    role: 'bot',
+                    type: 'text',
+                    text: "Sorry, I couldn't convert the report to PDF. Please try again.",
+                    timestamp: new Date().toISOString()
+                });
+                saveToStorage('messages', state.messages);
+                render();
+            }
+        }
+
         // Bot Response Handler
         function handleBotResponse(data) {
             console.log("Bot response:", data);
@@ -1176,6 +1253,12 @@
                 };
                 saveToStorage('messages', state.messages);
                 render();
+                return;
+            }
+
+            // HTML TO PDF RESPONSE
+            if (data.html && typeof data.html === 'string') {
+                convertHTMLToPDF(data.html, data.report_name || 'Report');
                 return;
             }
 
@@ -1578,10 +1661,16 @@
         }
 
         function downloadFile(url, filename) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
+            // If it's a PDF (data URL or blob URL), open in new tab for viewing
+            if (url.startsWith('data:application/pdf') || url.startsWith('blob:')) {
+                window.open(url, '_blank');
+            } else {
+                // Otherwise download the file
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+            }
         }
 
         // Render Functions
@@ -1672,7 +1761,7 @@
                         messagesHtml += `<div class="message-text" style="margin-top: 4px;">${escapeHtml(msg.text)}</div>`;
                     }
                     if (msg.file.url) {
-                        const buttonText = msg.file.url.startsWith('data:') ? 'Open PDF' : 'Download';
+                        const buttonText = (msg.file.url.startsWith('data:') || msg.file.url.startsWith('blob:')) ? 'View PDF' : 'Download';
                         messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.file.url}', '${escapeHtml(msg.file.name)}')">${buttonText}</button>`;
                     }
                 }
@@ -1712,7 +1801,7 @@
                     <i class="fa-solid fa-paperclip"></i>
                 </button>
                 <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls" onchange="handleFileSelect(event)">
-                <input type="text" id="messageInput" class="message-input" placeholder="Type your message..." ${state.isSending ? 'disabled' : ''}>
+                <textarea id="messageInput" class="message-input" placeholder="Type your message..." rows="1" ${state.isSending ? 'disabled' : ''}></textarea>
                 <button class="send-button" id="sendButton" onclick="handleSendClick()" ${state.isSending ? 'disabled' : ''}>
                     ${state.isSending ? '<div class="spinner" style="width: 20px; height: 20px; margin: 0 auto;"></div>' : 'Send'}
                 </button>
@@ -1843,8 +1932,16 @@
 
                     const messageInput = document.getElementById('messageInput');
                     if (messageInput && !state.isSending) {
-                        messageInput.addEventListener('keypress', (e) => {
-                            if (e.key === 'Enter' && !state.isSending) {
+                        // Auto-resize textarea
+                        messageInput.addEventListener('input', function() {
+                            this.style.height = 'auto';
+                            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                        });
+
+                        // Handle Enter vs Shift+Enter
+                        messageInput.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' && !e.shiftKey && !state.isSending) {
+                                e.preventDefault();
                                 handleSendClick();
                             }
                         });
@@ -1872,13 +1969,14 @@
             if (input && input.value.trim()) {
                 sendTextMessage(input.value.trim());
                 input.value = '';
+                input.style.height = 'auto'; // Reset height
                 // Focus back on input after sending
                 setTimeout(() => {
                     const messageInput = document.getElementById('messageInput');
                     if (messageInput) {
                         messageInput.focus();
                     }
-                }, 100);
+                }, 200);
             }
         }
 
