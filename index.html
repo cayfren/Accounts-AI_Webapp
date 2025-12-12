@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -18,23 +17,12 @@
             box-sizing: border-box;
         }
 
-        html {
-            scroll-behavior: smooth;
-            height: 100%;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            height: 100%;
-            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        #app {
-            height: 100%;
-        }
-
-        /* Theme Variables - Updated to match React Native */
+        /* Theme Variables */
         body.light-mode {
             --bg: #F8FAFC;
             --card: #FFFFFF;
@@ -48,25 +36,21 @@
             --input-bg: #F1F5F9;
             --sidebar-bg: #FFFFFF;
             --sidebar-hover: #F1F5F9;
-            --reset-job-bg: #30B882;
-            --active-tab: #0284C7;
         }
 
         body.dark-mode {
-            --bg: #1a1e23;
-            --card: #252a31;
-            --text: #ffffff;
-            --subtext: #848e9c;
-            --border: #2e353d;
-            --user-bubble: rgba(32, 52, 55, 0.25);
-            --user-bubble-border: #3d444d;
-            --accent: #2CBE82;
-            --accent-disabled: #2e353d;
-            --input-bg: #2c3139;
-            --sidebar-bg: #252a31;
-            --sidebar-hover: #2e353d;
-            --reset-job-bg: #352933;
-            --active-tab: #F4D748;
+            --bg: #0A0E1A;
+            --card: #121825;
+            --text: #E0E7FF;
+            --subtext: #818CF8;
+            --border: #1E293B;
+            --user-bubble: #1E3A8A;
+            --user-bubble-border: #3B82F6;
+            --accent: #06B6D4;
+            --accent-disabled: #1E293B;
+            --input-bg: #0F172A;
+            --sidebar-bg: #121825;
+            --sidebar-hover: #1E293B;
         }
 
         body {
@@ -205,10 +189,9 @@
             max-width: 100%;
             min-width: 0;
             overflow: hidden;
-            border-radius: 16px;
         }
 
-        /* Header - Updated styling */
+        /* Header */
         .header {
             background-color: var(--card);
             border-bottom: 1px solid var(--border);
@@ -220,61 +203,14 @@
         }
 
         .header-title {
-            font-size: 18px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text);
         }
 
         .header-buttons {
             display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        /* Reset Job Button - Prominent styling */
-        .reset-job-button {
-            height: 32px;
-            padding: 0 12px;
-            border-radius: 6px;
-            background-color: var(--reset-job-bg);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-            color: white;
-            white-space: nowrap;
-            transition: opacity 0.2s;
-        }
-
-        .reset-job-button:hover {
-            opacity: 0.8;
-        }
-
-        /* Tab Navigation */
-        .tab-button {
-            width: 38px;
-            height: 38px;
-            border-radius: 19px;
-            background-color: var(--input-bg);
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: opacity 0.2s;
-            color: var(--text);
-        }
-
-        .tab-button.active {
-            color: var(--active-tab);
-        }
-
-        .tab-button:hover {
-            opacity: 0.8;
+            gap: 8px;
         }
 
         .icon-button {
@@ -293,6 +229,28 @@
         }
 
         .icon-button:hover {
+            opacity: 0.8;
+        }
+
+        .text-button {
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 22px;
+            background-color: var(--input-bg);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .text-button:hover {
             opacity: 0.8;
         }
 
@@ -408,7 +366,6 @@
             flex-direction: column;
             overflow: hidden;
             min-height: 0;
-            border-radius: 0 0 16px 16px;
         }
 
         /* Chat wrapper - centered */
@@ -416,7 +373,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             width: 100%;
             min-height: 0;
@@ -430,48 +387,34 @@
             overflow-x: hidden;
             padding: 16px;
             min-height: 0;
-            scroll-behavior: smooth;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .messages-container::before {
-            content: '';
-            flex: 1;
-            min-height: 0;
         }
 
         /* Custom Scrollbar */
         .messages-container::-webkit-scrollbar,
-        .report-content::-webkit-scrollbar,
-        .email-scanner-container::-webkit-scrollbar {
+        .report-content::-webkit-scrollbar {
             width: 8px;
         }
 
         .messages-container::-webkit-scrollbar-track,
-        .report-content::-webkit-scrollbar-track,
-        .email-scanner-container::-webkit-scrollbar-track {
+        .report-content::-webkit-scrollbar-track {
             background: transparent;
         }
 
         .messages-container::-webkit-scrollbar-thumb,
-        .report-content::-webkit-scrollbar-thumb,
-        .email-scanner-container::-webkit-scrollbar-thumb {
+        .report-content::-webkit-scrollbar-thumb {
             background-color: var(--border);
             border-radius: 10px;
             border: 2px solid var(--bg);
         }
 
         .messages-container::-webkit-scrollbar-thumb:hover,
-        .report-content::-webkit-scrollbar-thumb:hover,
-        .email-scanner-container::-webkit-scrollbar-thumb:hover {
+        .report-content::-webkit-scrollbar-thumb:hover {
             background-color: var(--subtext);
         }
 
         /* Firefox Scrollbar */
         .messages-container,
-        .report-content,
-        .email-scanner-container {
+        .report-content {
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
         }
@@ -479,7 +422,7 @@
         .message-bubble {
             max-width: 70%;
             padding: 12px 16px;
-            border-radius: 18px;
+            border-radius: 12px;
             margin: 8px 0;
             word-wrap: break-word;
         }
@@ -549,10 +492,6 @@
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-            border-radius: 20px;
         }
 
         .attach-button {
@@ -566,7 +505,7 @@
 
         .message-input {
             flex: 1;
-            border-radius: 24px;
+            border-radius: 12px;
             padding: 12px 16px;
             font-size: 16px;
             background-color: var(--input-bg);
@@ -581,45 +520,9 @@
             line-height: 1.5;
         }
 
-        /* Message Input Scrollbar - Dark themed */
-        .message-input::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .message-input::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .message-input::-webkit-scrollbar-thumb {
-            background-color: rgba(100, 100, 100, 0.5);
-            border-radius: 10px;
-        }
-
-        body.dark-mode .message-input::-webkit-scrollbar-thumb {
-            background-color: rgba(80, 80, 80, 0.6);
-        }
-
-        .message-input::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(120, 120, 120, 0.7);
-        }
-
-        body.dark-mode .message-input::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(100, 100, 100, 0.8);
-        }
-
-        /* Firefox Scrollbar for message input */
-        .message-input {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
-        }
-
-        body.dark-mode .message-input {
-            scrollbar-color: rgba(80, 80, 80, 0.6) transparent;
-        }
-
         .send-button {
             padding: 12px 20px;
-            border-radius: 16px;
+            border-radius: 8px;
             background-color: var(--accent);
             color: white;
             border: none;
@@ -671,19 +574,13 @@
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 20px;
-            margin-top: 30px;
             color: var(--text);
-        }
-
-        .reports-title:first-child {
-            margin-top: 0;
         }
 
         .reports-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 12px;
-            margin-bottom: 20px;
         }
 
         .report-card {
@@ -717,7 +614,7 @@
             color: var(--text);
         }
 
-        /* Report Detail */
+        /* Report Detail - FIXED FOR SCROLLING */
         .report-detail-container {
             flex: 1;
             display: flex;
@@ -788,17 +685,7 @@
             background-color: #10B981;
         }
 
-        .delete-all-button {
-            padding: 10px 14px;
-            border-radius: 8px;
-            background-color: #EF4444;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
+        /* FIXED: Report content now scrolls properly and uses its own theme */
         .report-content {
             flex: 1;
             overflow: auto;
@@ -808,6 +695,7 @@
             color: #000000;
         }
 
+        /* Force all text in report to be dark for readability on white background */
         .report-content *,
         .report-content h1,
         .report-content h2,
@@ -830,6 +718,7 @@
             background-color: #FFFFFF !important;
         }
 
+        /* Ensure table cells have white background */
         .report-content td,
         .report-content th {
             background-color: #FFFFFF !important;
@@ -897,266 +786,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Settings Page */
-        .settings-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .settings-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: var(--text);
-        }
-
-        .settings-section {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--subtext);
-            padding: 16px 16px 12px;
-            opacity: 0.8;
-        }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-
-        .setting-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .setting-icon {
-            font-size: 20px;
-            width: 24px;
-            text-align: center;
-        }
-
-        .setting-label {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .setting-description {
-            font-size: 13px;
-            color: var(--subtext);
-            margin-top: 2px;
-        }
-
-        .theme-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .theme-button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            background-color: var(--input-bg);
-            color: var(--text);
-        }
-
-        .theme-button.active {
-            background-color: var(--accent);
-            color: white;
-        }
-
-        .username-display {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .username-icon {
-            font-size: 40px;
-            color: var(--accent);
-        }
-
-        .username-text {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .logout-container {
-            padding: 16px;
-            border-top: 1px solid var(--border);
-            background-color: var(--card);
-        }
-
-        .logout-button {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            background-color: #EF4444;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .logout-button:hover {
-            opacity: 0.9;
-        }
-
-        /* Email Scanner */
-        .email-scanner-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            min-height: 0;
-        }
-
-        .date-picker-container {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .date-picker-label {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 16px;
-        }
-
-        .date-inputs-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .date-input-group {
-            flex: 1;
-        }
-
-        .date-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--subtext);
-            margin-bottom: 8px;
-        }
-
-        .date-input {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 8px;
-            background-color: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            font-size: 16px;
-        }
-
-        .go-button {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            min-height: 50px;
-        }
-
-        .go-button:hover {
-            opacity: 0.9;
-        }
-
-        .go-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .files-list-container {
-            background-color: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .files-list-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 12px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-
-        .file-item-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            cursor: pointer;
-        }
-
-        .file-icon {
-            font-size: 24px;
-        }
-
-        .file-name {
-            font-size: 14px;
-            color: var(--text);
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .delete-file-button {
-            padding: 8px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #EF4444;
-            font-size: 20px;
-        }
-
         .hidden {
             display: none !important;
         }
@@ -1186,134 +815,19 @@
             }
 
             .header-title {
-                font-size: 16px;
-            }
-
-            .tab-button {
-                width: 36px;
-                height: 36px;
                 font-size: 18px;
             }
 
-            .reset-job-button {
-                font-size: 10px;
-                padding: 0 8px;
-                height: 28px;
+            .icon-button {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
             }
         }
 
+        /* File input hidden */
         #fileInput {
             display: none;
-        }
-
-        /* PDF Viewer Modal */
-        .pdf-viewer-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .pdf-viewer-modal.active {
-            display: flex;
-        }
-
-        .pdf-viewer-container {
-            background-color: var(--card);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 1200px;
-            height: 90%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .pdf-viewer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            background-color: var(--card);
-        }
-
-        .pdf-viewer-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text);
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .pdf-viewer-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .pdf-page-info {
-            font-size: 14px;
-            color: var(--subtext);
-            white-space: nowrap;
-        }
-
-        .pdf-nav-button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            background-color: var(--input-bg);
-            color: var(--text);
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .pdf-nav-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pdf-close-button {
-            padding: 8px 16px;
-            border-radius: 8px;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .pdf-viewer-content {
-            flex: 1;
-            overflow: auto;
-            background-color: #525252;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-        }
-
-        .pdf-canvas-container {
-            background-color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
-
-        #pdfCanvas {
-            display: block;
-            max-width: 100%;
-            height: auto;
         }
     </style>
 </head>
@@ -1328,11 +842,6 @@
             PASSWORD: "0000"
         };
         const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-        // PDF.js Configuration
-        if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
 
         const SIDEBAR_REPORTS = [
             { id: "invoices", icon: "fa-file-invoice", iconColor: "#3B82F6", label: "Invoices Issued", apiName: "Invoices Issued" },
@@ -1356,20 +865,10 @@
             { id: "journal", icon: "fa-book", iconColor: "#A855F7", bgColor: "#FAE8FF", label: "Journal Entries", apiName: "Journal Entries" }
         ];
 
-        const PREMIUM_REPORTS = [
-            { id: "vat_report", icon: "fa-file-invoice-dollar", iconColor: "#F59E0B", bgColor: "#FEF3C7", label: "Generate VAT Report" },
-            { id: "corporate_tax", icon: "fa-calculator", iconColor: "#10B981", bgColor: "#D1FAE5", label: "Calculate Corporate TAX" }
-        ];
-
-        const EMAIL_SCANNER = [
-            { id: "email_scanner", icon: "fa-envelope", iconColor: "#3B82F6", bgColor: "#DBEAFE", label: "Email Scanner" }
-        ];
-
         // State
         let state = {
             isLoggedIn: false,
             isDark: false,
-            currentPage: 'chat', // 'chat', 'reports', 'settings'
             showReports: false,
             selectedReport: null,
             reportHtml: null,
@@ -1388,17 +887,6 @@
                 loading: false,
                 error: false,
                 lastUpdated: null
-            },
-            emailScannerFiles: [],
-            emailFromDate: '',
-            emailToDate: '',
-            isLoadingEmailFiles: false,
-            pdfViewer: {
-                isOpen: false,
-                pdfDoc: null,
-                currentPage: 1,
-                totalPages: 0,
-                fileName: ''
             }
         };
 
@@ -1440,13 +928,6 @@
             }).format(amount);
         }
 
-        function formatDateToYYYYMMDD(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
         // Storage Functions
         function saveToStorage(key, value) {
             localStorage.setItem(key, JSON.stringify(value));
@@ -1457,7 +938,7 @@
             return item ? JSON.parse(item) : null;
         }
 
-        // Metrics Functions
+        // Metrics Functions - Extract from cached Profit & Loss report
         function extractMetricsFromHTML(html) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
@@ -1466,15 +947,22 @@
             let turnover = '--';
             let netProfit = '--';
 
+            console.log('🔍 Parsing metrics from HTML...');
+
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td, th');
                 if (cells.length >= 2) {
                     const label = cells[0].textContent.trim().toLowerCase();
                     const value = cells[cells.length - 1].textContent.trim();
 
+                    console.log('Row label:', label, '| Value:', value);
+
+                    // Match various possible labels for revenue/turnover
+                    // Priority: Total Operating Income is the main one
                     if (label.includes('total operating income')) {
                         const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
                         if (!isNaN(numValue)) {
+                            console.log('✅ Found turnover (Total Operating Income):', numValue);
                             turnover = numValue;
                         }
                     } else if (label.includes('total revenue') ||
@@ -1484,10 +972,12 @@
                                label.includes('turnover')) {
                         const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
                         if (!isNaN(numValue) && turnover === '--') {
+                            console.log('✅ Found turnover:', numValue);
                             turnover = numValue;
                         }
                     }
 
+                    // Match various possible labels for net profit
                     if (label.includes('net profit') ||
                         label.includes('net income') ||
                         label.includes('net profit/loss') ||
@@ -1495,12 +985,14 @@
                         label.includes('profit after tax')) {
                         const numValue = parseFloat(value.replace(/[^0-9.-]/g, ''));
                         if (!isNaN(numValue)) {
+                            console.log('✅ Found net profit:', numValue);
                             netProfit = numValue;
                         }
                     }
                 }
             });
 
+            console.log('Final metrics - Turnover:', turnover, '| Net Profit:', netProfit);
             return { turnover, netProfit };
         }
 
@@ -1510,8 +1002,10 @@
             render();
 
             try {
+                // First, check if we have cached P&L report
                 const cachedPL = state.reportsCache['profit_loss'];
                 if (cachedPL && cachedPL.html) {
+                    console.log('📊 Using cached Profit & Loss report for metrics');
                     const metrics = extractMetricsFromHTML(cachedPL.html);
                     state.metrics.turnover = metrics.turnover;
                     state.metrics.netProfit = metrics.netProfit;
@@ -1523,6 +1017,7 @@
                     return;
                 }
 
+                // If no cache, fetch fresh data
                 const today = new Date();
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1590,7 +1085,7 @@
                     id: 'welcome',
                     role: 'bot',
                     type: 'text',
-                    text: 'Connected.',
+                    text: 'Welcome! I\'m your AI accountant. You can ask me to:\n• Create an invoice\n• Generate quotes\n• Pull Profit & Loss report\n• View Balance Sheet\n• Check customer receivables\n• Review vendor payables\n• Or any other accounting tasks you would like to perform...\n\nWhat would you like to do?',
                     timestamp: new Date().toISOString()
                 }];
                 saveToStorage('messages', state.messages);
@@ -1604,11 +1099,6 @@
             const savedMetrics = getFromStorage('metrics');
             if (savedMetrics) {
                 state.metrics = { ...state.metrics, ...savedMetrics };
-            }
-
-            const emailFiles = getFromStorage('emailScannerFiles');
-            if (emailFiles) {
-                state.emailScannerFiles = emailFiles;
             }
 
             render();
@@ -1627,7 +1117,9 @@
             if (username === CREDENTIALS.USERNAME && password === CREDENTIALS.PASSWORD) {
                 state.isLoggedIn = true;
                 render();
+                // Auto-fetch metrics on login
                 fetchMetrics();
+                // Focus on message input after login (longer delay to account for render)
                 setTimeout(() => {
                     const messageInput = document.getElementById('messageInput');
                     if (messageInput) {
@@ -1653,38 +1145,9 @@
                     id: 'welcome-' + Date.now(),
                     role: 'bot',
                     type: 'text',
-                    text: 'Chat cleared. How can I help you today?',
+                    text: 'Chat cleared. I\'m your AI accountant. You can ask me to:\n• Create an invoice\n• Generate quotes\n• Pull Profit & Loss report\n• View Balance Sheet\n• Check customer receivables\n• Review vendor payables\n• Or any other accounting tasks you would like to perform...\n\nWhat would you like to do?',
                     timestamp: new Date().toISOString()
                 }];
-                saveToStorage('messages', state.messages);
-                render();
-            }
-        }
-
-        // Reset Job
-        async function handleResetJob() {
-            try {
-                const payload = {
-                    client_id: state.clientId,
-                    message_type: 'reset_job'
-                };
-
-                const response = await axios.post(WEBHOOK_URL, payload, {
-                    timeout: 30000,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                console.log("Reset job response:", response.data);
-                handleBotResponse(response.data);
-            } catch (error) {
-                console.error("Reset job error:", error);
-                state.messages.push({
-                    id: generateUUID(),
-                    role: 'bot',
-                    type: 'text',
-                    text: "Sorry, I couldn't process the reset job request. Please try again.",
-                    timestamp: new Date().toISOString()
-                });
                 saveToStorage('messages', state.messages);
                 render();
             }
@@ -1700,6 +1163,7 @@
         // Convert HTML to PDF
         async function convertHTMLToPDF(htmlContent, reportName) {
             try {
+                // Show loading message
                 const loadingMessage = {
                     id: generateUUID(),
                     role: 'bot',
@@ -1711,12 +1175,14 @@
                 saveToStorage('messages', state.messages);
                 render();
 
+                // Create a temporary container for the HTML
                 const tempContainer = document.createElement('div');
                 tempContainer.innerHTML = htmlContent;
                 tempContainer.style.padding = '20px';
                 tempContainer.style.backgroundColor = '#ffffff';
                 tempContainer.style.color = '#000000';
 
+                // Configure PDF options
                 const opt = {
                     margin: 10,
                     filename: `${reportName.replace(/\s+/g, '_')}.pdf`,
@@ -1725,11 +1191,14 @@
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
+                // Convert to PDF blob
                 const pdfBlob = await html2pdf().set(opt).from(tempContainer).output('blob');
                 const pdfUrl = URL.createObjectURL(pdfBlob);
 
+                // Remove loading message
                 state.messages = state.messages.filter(msg => msg.id !== loadingMessage.id);
 
+                // Add PDF message
                 const botMessage = {
                     id: generateUUID(),
                     role: 'bot',
@@ -2035,13 +1504,16 @@
                 const toDateValue = `${year}-${month}-${day}`;
                 const fromDate = `${year}-01-01`;
 
-                const dateRangeReports = ["profit_loss"];
-                const asOfDateReports = ["balance_sheet", "receivables", "payables"];
+                // Categorize reports by their date parameter requirements
+                const dateRangeReports = ["profit_loss"]; // from_date + to_date
+                const asOfDateReports = ["balance_sheet", "receivables", "payables"]; // to_date only
+                // All other reports (invoices, quotes, bills, purchase_orders, journal, customers, vendors, accounts) have no date parameters - backend handles limits
 
                 let requestText;
                 let payload;
 
                 if (dateRangeReports.includes(reportId)) {
+                    // Reports that use date range format (from beginning of year to today)
                     requestText = `report_view ${reportApiName}`;
                     payload = {
                         client_id: state.clientId,
@@ -2052,6 +1524,7 @@
                         to_date: toDateValue
                     };
                 } else if (asOfDateReports.includes(reportId)) {
+                    // Reports that use only to_date (as of date)
                     requestText = `report_view ${reportApiName}`;
                     payload = {
                         client_id: state.clientId,
@@ -2061,6 +1534,7 @@
                         to_date: toDateValue
                     };
                 } else {
+                    // All other reports - send to_date as current date
                     requestText = `report_view ${reportApiName}`;
                     payload = {
                         client_id: state.clientId,
@@ -2116,26 +1590,9 @@
 
         function handleReportClick(reportId) {
             state.selectedReport = reportId;
+            state.showReports = true;
 
-            // Premium reports
-            if (reportId === "vat_report" || reportId === "corporate_tax") {
-                state.reportHtml = "<html><body style='display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;'><div style='text-align:center;'><h1>Coming Soon</h1><p>This feature is under development</p></div></body></html>";
-                state.reportName = reportId === "vat_report" ? "Generate VAT Report" : "Calculate Corporate TAX";
-                state.reportTimestamp = null;
-                render();
-                return;
-            }
-
-            // Email scanner
-            if (reportId === "email_scanner") {
-                state.reportHtml = null;
-                state.reportName = "Email Scanner";
-                state.reportTimestamp = null;
-                render();
-                return;
-            }
-
-            // Regular reports
+            // Check cache first
             const cachedReport = state.reportsCache[reportId];
             if (cachedReport) {
                 state.reportHtml = cachedReport.html;
@@ -2206,6 +1663,7 @@
         }
 
         function downloadFile(messageId) {
+            // Find the message by ID
             const message = state.messages.find(msg => msg.id === messageId);
             if (!message || !message.file || !message.file.url) {
                 alert('File not found');
@@ -2214,15 +1672,10 @@
 
             const url = message.file.url;
             const filename = message.file.name;
-            const contentType = message.file.mime || message.file.content_type || '';
 
-            // Check if it's a PDF
-            const isPDF = contentType.includes('pdf') || filename.toLowerCase().endsWith('.pdf');
-
-            if (isPDF && (url.startsWith('data:') || url.startsWith('blob:'))) {
-                // Open PDF in the in-app viewer
-                openPDFViewer(url, filename);
-            } else if (url.startsWith('data:')) {
+            // If it's a data URL, convert to blob URL first (browsers block data URLs in new tabs)
+            if (url.startsWith('data:')) {
+                // Convert data URL to blob
                 const byteString = atob(url.split(',')[1]);
                 const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
                 const ab = new ArrayBuffer(byteString.length);
@@ -2232,241 +1685,19 @@
                 }
                 const blob = new Blob([ab], { type: mimeString });
                 const blobUrl = URL.createObjectURL(blob);
+
+                // Open blob URL in new tab
                 window.open(blobUrl, '_blank');
             } else if (url.startsWith('blob:')) {
+                // Already a blob URL, open directly
                 window.open(url, '_blank');
             } else {
+                // Otherwise download the file
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 a.click();
             }
-        }
-
-        // PDF Viewer Functions
-        async function openPDFViewer(url, filename) {
-            try {
-                let pdfData;
-
-                if (url.startsWith('data:')) {
-                    // Convert data URL to Uint8Array
-                    const base64 = url.split(',')[1];
-                    const binaryString = atob(base64);
-                    const bytes = new Uint8Array(binaryString.length);
-                    for (let i = 0; i < binaryString.length; i++) {
-                        bytes[i] = binaryString.charCodeAt(i);
-                    }
-                    pdfData = bytes;
-                } else if (url.startsWith('blob:')) {
-                    // Fetch blob URL
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    const arrayBuffer = await blob.arrayBuffer();
-                    pdfData = new Uint8Array(arrayBuffer);
-                }
-
-                // Load PDF document
-                const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-                const pdfDoc = await loadingTask.promise;
-
-                // Update state
-                state.pdfViewer.pdfDoc = pdfDoc;
-                state.pdfViewer.totalPages = pdfDoc.numPages;
-                state.pdfViewer.currentPage = 1;
-                state.pdfViewer.fileName = filename;
-                state.pdfViewer.isOpen = true;
-
-                // Show modal
-                const modal = document.getElementById('pdfViewerModal');
-                if (modal) {
-                    modal.classList.add('active');
-                }
-
-                // Render first page
-                await renderPDFPage(1);
-            } catch (error) {
-                console.error('Error loading PDF:', error);
-                alert('Failed to load PDF. Please try again.');
-            }
-        }
-
-        async function renderPDFPage(pageNum) {
-            if (!state.pdfViewer.pdfDoc) return;
-
-            try {
-                const page = await state.pdfViewer.pdfDoc.getPage(pageNum);
-                const canvas = document.getElementById('pdfCanvas');
-                const context = canvas.getContext('2d');
-
-                // Calculate scale to fit container
-                const viewport = page.getViewport({ scale: 1 });
-                const container = document.getElementById('pdfViewerContent');
-                const containerWidth = container.clientWidth - 40;
-                const scale = containerWidth / viewport.width;
-                const scaledViewport = page.getViewport({ scale: scale });
-
-                // Set canvas dimensions
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
-
-                // Render PDF page
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: scaledViewport
-                };
-                await page.render(renderContext).promise;
-
-                // Update UI
-                document.getElementById('pdfViewerTitle').textContent = state.pdfViewer.fileName;
-                document.getElementById('pdfPageInfo').textContent = `Page ${pageNum} of ${state.pdfViewer.totalPages}`;
-                document.getElementById('pdfPrevButton').disabled = pageNum <= 1;
-                document.getElementById('pdfNextButton').disabled = pageNum >= state.pdfViewer.totalPages;
-
-                state.pdfViewer.currentPage = pageNum;
-            } catch (error) {
-                console.error('Error rendering PDF page:', error);
-            }
-        }
-
-        function previousPDFPage() {
-            if (state.pdfViewer.currentPage > 1) {
-                renderPDFPage(state.pdfViewer.currentPage - 1);
-            }
-        }
-
-        function nextPDFPage() {
-            if (state.pdfViewer.currentPage < state.pdfViewer.totalPages) {
-                renderPDFPage(state.pdfViewer.currentPage + 1);
-            }
-        }
-
-        function closePDFViewer() {
-            const modal = document.getElementById('pdfViewerModal');
-            if (modal) {
-                modal.classList.remove('active');
-            }
-
-            // Clean up
-            state.pdfViewer.pdfDoc = null;
-            state.pdfViewer.currentPage = 1;
-            state.pdfViewer.totalPages = 0;
-            state.pdfViewer.fileName = '';
-            state.pdfViewer.isOpen = false;
-        }
-
-        // Email Scanner Functions
-        async function fetchEmailInvoices() {
-            if (!state.emailFromDate || !state.emailToDate) {
-                alert("Please select both from and to dates");
-                return;
-            }
-
-            const fromDate = new Date(state.emailFromDate);
-            const toDate = new Date(state.emailToDate);
-            const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 365) {
-                alert("Date range cannot exceed 1 year");
-                return;
-            }
-
-            if (toDate < fromDate) {
-                alert("To date must be after from date");
-                return;
-            }
-
-            state.isLoadingEmailFiles = true;
-            render();
-
-            try {
-                const payload = {
-                    client_id: state.clientId,
-                    message_type: 'fetch_email_invoices',
-                    from_date: state.emailFromDate,
-                    to_date: state.emailToDate
-                };
-
-                console.log("Fetching email invoices:", payload);
-
-                const response = await axios.post(WEBHOOK_URL, payload, {
-                    timeout: 60000,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                console.log("Email invoices response:", response.data);
-
-                if (response.data.files && Array.isArray(response.data.files)) {
-                    const timestamp = new Date().toISOString();
-                    const newFiles = response.data.files.map(file => ({
-                        id: generateUUID(),
-                        name: file.name || "document",
-                        base64: file.base64,
-                        content_type: file.content_type || file.type || "application/pdf",
-                        timestamp
-                    }));
-
-                    state.emailScannerFiles = newFiles;
-                    saveToStorage('emailScannerFiles', newFiles);
-
-                    alert(`Success: ${newFiles.length} file(s) loaded`);
-                } else if (state.emailScannerFiles.length > 0) {
-                    alert("No new files found. Showing previously loaded files.");
-                } else {
-                    alert("No files found for the selected date range");
-                }
-            } catch (error) {
-                console.error("Email fetch error:", error);
-                if (state.emailScannerFiles.length > 0) {
-                    alert("Failed to load new files. Showing previously loaded files.");
-                } else {
-                    alert("Failed to fetch email invoices. Please try again.");
-                }
-            } finally {
-                state.isLoadingEmailFiles = false;
-                render();
-            }
-        }
-
-        function deleteEmailFile(fileId) {
-            state.emailScannerFiles = state.emailScannerFiles.filter(file => file.id !== fileId);
-            saveToStorage('emailScannerFiles', state.emailScannerFiles);
-            render();
-        }
-
-        function deleteAllEmailFiles() {
-            if (confirm("Are you sure you want to delete all email files?")) {
-                state.emailScannerFiles = [];
-                saveToStorage('emailScannerFiles', []);
-                render();
-            }
-        }
-
-        function openEmailFile(file) {
-            try {
-                const byteString = atob(file.base64);
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
-                }
-                const blob = new Blob([ab], { type: file.content_type });
-                const blobUrl = URL.createObjectURL(blob);
-                window.open(blobUrl, '_blank');
-            } catch (error) {
-                console.error("Error opening email file:", error);
-                alert("Could not open the file. " + error.message);
-            }
-        }
-
-        // Page Navigation
-        function setCurrentPage(page) {
-            state.currentPage = page;
-            if (page !== 'reports') {
-                state.selectedReport = null;
-                state.reportHtml = null;
-            }
-            render();
         }
 
         // Render Functions
@@ -2509,7 +1740,7 @@
                     <div class="sidebar-reports">
                         <div class="sidebar-reports-title">Quick Reports</div>
                         ${SIDEBAR_REPORTS.map(report => `
-                            <div class="sidebar-report-item" onclick="setCurrentPage('reports'); handleReportClick('${report.id}');">
+                            <div class="sidebar-report-item" onclick="handleReportClick('${report.id}')">
                                 <i class="fa-solid ${report.icon} sidebar-report-icon" style="color: ${report.iconColor}"></i>
                                 <div class="sidebar-report-label">${report.label}</div>
                             </div>
@@ -2605,101 +1836,22 @@
         }
 
         function renderReportsGrid() {
-            return `
-                <div class="reports-title">Reports</div>
-                <div class="reports-grid">
-                    ${REPORTS.map(report => `
-                        <div class="report-card" onclick="handleReportClick('${report.id}')">
-                            <i class="fa-solid ${report.icon} report-icon" style="color: ${report.iconColor}"></i>
-                            <div class="report-label">${report.label}</div>
-                        </div>
-                    `).join('')}
-                </div>
+            let reportsHtml = '<div class="reports-title">Reports</div><div class="reports-grid">';
 
-                <div class="reports-title">Premium Reports</div>
-                <div class="reports-grid">
-                    ${PREMIUM_REPORTS.map(report => `
-                        <div class="report-card" onclick="handleReportClick('${report.id}')">
-                            <i class="fa-solid ${report.icon} report-icon" style="color: ${report.iconColor}"></i>
-                            <div class="report-label">${report.label}</div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="reports-title">Email Scanner</div>
-                <div class="reports-grid">
-                    ${EMAIL_SCANNER.map(item => `
-                        <div class="report-card" onclick="handleReportClick('${item.id}')">
-                            <div style="display: flex; gap: 8px;">
-                                <i class="fa-solid fa-envelope report-icon" style="color: ${item.iconColor}"></i>
-                                <i class="fa-solid fa-magnifying-glass report-icon" style="color: ${item.iconColor}; font-size: 35px;"></i>
-                            </div>
-                            <div class="report-label">${item.label}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        function renderEmailScanner() {
-            return `
-                <div class="report-toolbar">
-                    <button class="toolbar-button" onclick="state.selectedReport = null; render();">← Back</button>
-                    <span style="flex: 1; text-align: center; font-size: 16px; font-weight: 600; color: var(--text);">Email Scanner</span>
-                    ${state.emailScannerFiles.length > 0 ? `
-                        <button class="delete-all-button" onclick="deleteAllEmailFiles()">Delete All</button>
-                    ` : ''}
-                </div>
-                <div class="email-scanner-container">
-                    <div class="date-picker-container">
-                        <div class="date-picker-label">Select Date Range</div>
-                        <div class="date-inputs-row">
-                            <div class="date-input-group">
-                                <div class="date-label">From Date</div>
-                                <input type="date" class="date-input" id="emailFromDate" value="${state.emailFromDate}" onchange="state.emailFromDate = this.value; render();">
-                            </div>
-                            <div class="date-input-group">
-                                <div class="date-label">To Date</div>
-                                <input type="date" class="date-input" id="emailToDate" value="${state.emailToDate}" onchange="state.emailToDate = this.value; render();">
-                            </div>
-                        </div>
-                        <button class="go-button" onclick="fetchEmailInvoices()" ${state.isLoadingEmailFiles ? 'disabled' : ''}>
-                            ${state.isLoadingEmailFiles ? '<div class="spinner"></div>' : 'Go'}
-                        </button>
+            REPORTS.forEach(report => {
+                reportsHtml += `
+                    <div class="report-card" onclick="handleReportClick('${report.id}')">
+                        <i class="fa-solid ${report.icon} report-icon" style="color: ${report.iconColor}"></i>
+                        <div class="report-label">${report.label}</div>
                     </div>
+                `;
+            });
 
-                    ${state.emailScannerFiles.length > 0 ? `
-                        <div class="files-list-container">
-                            <div class="files-list-title">Files (${state.emailScannerFiles.length})</div>
-                            ${state.emailScannerFiles.map(file => {
-                                const isPDF = file.content_type.includes("pdf");
-                                const isExcel = file.content_type.includes("sheet") || file.content_type.includes("excel");
-                                const iconClass = isPDF ? 'fa-file-pdf' : (isExcel ? 'fa-file-excel' : 'fa-file');
-                                const iconColor = isPDF ? '#EF4444' : (isExcel ? '#10B981' : 'var(--accent)');
-
-                                return `
-                                    <div class="file-item">
-                                        <div class="file-item-content" onclick="openEmailFile(${JSON.stringify(file).replace(/"/g, '&quot;')})">
-                                            <i class="fa-solid ${iconClass} file-icon" style="color: ${iconColor}"></i>
-                                            <div class="file-name">${escapeHtml(file.name)}</div>
-                                        </div>
-                                        <button class="delete-file-button" onclick="deleteEmailFile('${file.id}')">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
+            reportsHtml += '</div>';
+            return reportsHtml;
         }
 
         function renderReportDetail() {
-            if (state.selectedReport === 'email_scanner') {
-                return renderEmailScanner();
-            }
-
             if (state.isLoadingReport) {
                 return `
                     <div class="loading-container">
@@ -2734,89 +1886,54 @@
                 `;
             }
 
-            return `
-                <div class="coming-soon">
-                    <div class="coming-soon-title">Coming Soon</div>
-                    <div class="coming-soon-subtitle">This feature is under development</div>
-                    <button class="back-button" onclick="state.selectedReport = null; render();">← Back to Reports</button>
-                </div>
-            `;
-        }
-
-        function renderSettings() {
-            return `
-                <div class="settings-container">
-                    <div class="settings-title">Settings</div>
-
-                    <div class="settings-section">
-                        <div class="section-title">Account</div>
-                        <div class="setting-item">
-                            <div class="username-display">
-                                <i class="fa-solid fa-user-circle username-icon"></i>
-                                <div class="username-text">Admin</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <div class="section-title">Appearance</div>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <i class="fa-solid ${state.isDark ? 'fa-moon' : 'fa-sun'} setting-icon" style="color: var(--accent)"></i>
-                                <div class="setting-label">Theme</div>
-                            </div>
-                            <div class="theme-buttons">
-                                <button class="theme-button ${!state.isDark ? 'active' : ''}" onclick="if(state.isDark) toggleTheme()">Light</button>
-                                <button class="theme-button ${state.isDark ? 'active' : ''}" onclick="if(!state.isDark) toggleTheme()">Dark</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <div class="section-title">Chat Actions</div>
-                        <div class="setting-item" onclick="clearChat()" style="cursor: pointer;">
-                            <div class="setting-info">
-                                <i class="fa-solid fa-trash setting-icon" style="color: #EF4444"></i>
-                                <div>
-                                    <div class="setting-label" style="color: #EF4444">Delete Chat History</div>
-                                    <div class="setting-description">Clear all messages permanently</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--subtext)"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="logout-container">
-                    <button class="logout-button" onclick="handleLogout()">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        Logout
-                    </button>
-                </div>
-            `;
+            // No coming soon - all reports are configured
+            return '';
         }
 
         function renderMain() {
-            if (state.currentPage === 'settings') {
-                return renderSettings();
-            }
-
-            if (state.currentPage === 'reports') {
-                if (state.selectedReport) {
-                    return `<div class="report-detail-container">${renderReportDetail()}</div>`;
-                } else {
-                    return `<div class="reports-container">${renderReportsGrid()}</div>`;
-                }
-            }
-
-            // Chat page
             return `
-                <div class="chat-wrapper">
-                    <div class="messages-container" id="messagesContainer">
-                        ${renderMessages()}
+                <div class="container">
+                    <div class="header">
+                        <div class="header-title">${state.showReports ? 'Reports' : 'Chat'}</div>
+                        <div class="header-buttons">
+                            ${state.showReports ? `
+                                <button class="text-button" onclick="state.showReports = false; render();" title="Back to Chat">
+                                    <i class="fa-solid fa-comments"></i>
+                                    <span>Back to Chat</span>
+                                </button>
+                            ` : `
+                                <button class="text-button" onclick="state.showReports = true; render();" title="Reports">
+                                    <i class="fa-solid fa-chart-bar"></i>
+                                    <span>Reports</span>
+                                </button>
+                            `}
+                            <button class="icon-button" onclick="clearChat()" title="Clear Chat">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            <button class="icon-button" onclick="toggleTheme()" title="Toggle Theme">
+                                <i class="fa-solid ${state.isDark ? 'fa-sun' : 'fa-moon'}"></i>
+                            </button>
+                            <button class="icon-button" onclick="handleLogout()" title="Logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="input-container">
-                    ${renderInputArea()}
+                    <div class="main-content">
+                        ${state.showReports ? (
+                            state.selectedReport ?
+                                `<div class="report-detail-container">${renderReportDetail()}</div>` :
+                                `<div class="reports-container">${renderReportsGrid()}</div>`
+                        ) : `
+                            <div class="chat-wrapper">
+                                <div class="messages-container" id="messagesContainer">
+                                    ${renderMessages()}
+                                </div>
+                                <div class="input-container">
+                                    ${renderInputArea()}
+                                </div>
+                            </div>
+                        `}
+                    </div>
                 </div>
             `;
         }
@@ -2830,56 +1947,11 @@
                 app.innerHTML = `
                     <div class="app-layout">
                         ${renderSidebar()}
-                        <div class="container">
-                            <div class="header">
-                                <div class="header-title">Accounts-AI</div>
-                                <div class="header-buttons">
-                                    <button class="reset-job-button" onclick="handleResetJob()">Reset Job</button>
-                                    <button class="tab-button ${state.currentPage === 'chat' ? 'active' : ''}" onclick="setCurrentPage('chat')" title="Chat">
-                                        <i class="fa-solid fa-comments"></i>
-                                    </button>
-                                    <button class="tab-button ${state.currentPage === 'reports' ? 'active' : ''}" onclick="setCurrentPage('reports')" title="Reports">
-                                        <i class="fa-solid fa-chart-bar"></i>
-                                    </button>
-                                    <button class="tab-button ${state.currentPage === 'settings' ? 'active' : ''}" onclick="setCurrentPage('settings')" title="Settings">
-                                        <i class="fa-solid fa-gear"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="main-content">
-                                ${renderMain()}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PDF Viewer Modal -->
-                    <div id="pdfViewerModal" class="pdf-viewer-modal">
-                        <div class="pdf-viewer-container">
-                            <div class="pdf-viewer-header">
-                                <div class="pdf-viewer-title" id="pdfViewerTitle">PDF Viewer</div>
-                                <div class="pdf-viewer-controls">
-                                    <button class="pdf-nav-button" id="pdfPrevButton" onclick="previousPDFPage()">
-                                        <i class="fa-solid fa-chevron-left"></i> Previous
-                                    </button>
-                                    <span class="pdf-page-info" id="pdfPageInfo">Page 1 of 1</span>
-                                    <button class="pdf-nav-button" id="pdfNextButton" onclick="nextPDFPage()">
-                                        Next <i class="fa-solid fa-chevron-right"></i>
-                                    </button>
-                                    <button class="pdf-close-button" onclick="closePDFViewer()">
-                                        <i class="fa-solid fa-times"></i> Close
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="pdf-viewer-content" id="pdfViewerContent">
-                                <div class="pdf-canvas-container">
-                                    <canvas id="pdfCanvas"></canvas>
-                                </div>
-                            </div>
-                        </div>
+                        ${renderMain()}
                     </div>
                 `;
 
-                if (state.currentPage === 'chat') {
+                if (!state.showReports) {
                     const messagesContainer = document.getElementById('messagesContainer');
                     if (messagesContainer) {
                         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -2887,11 +1959,13 @@
 
                     const messageInput = document.getElementById('messageInput');
                     if (messageInput && !state.isSending) {
+                        // Auto-resize textarea
                         messageInput.addEventListener('input', function() {
                             this.style.height = 'auto';
                             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
                         });
 
+                        // Handle Enter vs Shift+Enter
                         messageInput.addEventListener('keydown', (e) => {
                             if (e.key === 'Enter' && !e.shiftKey && !state.isSending) {
                                 e.preventDefault();
@@ -2899,6 +1973,7 @@
                             }
                         });
 
+                        // Auto-focus input field
                         messageInput.focus();
                     }
                 }
@@ -2924,7 +1999,8 @@
             if (input && input.value.trim()) {
                 sendTextMessage(input.value.trim());
                 input.value = '';
-                input.style.height = 'auto';
+                input.style.height = 'auto'; // Reset height
+                // Focus back on input after sending
                 setTimeout(() => {
                     const messageInput = document.getElementById('messageInput');
                     if (messageInput) {
