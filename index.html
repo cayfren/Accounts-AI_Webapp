@@ -18,7 +18,7 @@
         }
 
         html {
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
             height: 100%;
         }
 
@@ -424,20 +424,15 @@
 
         /* Messages Container */
         .messages-container {
+            overflow-anchor: none; /* prevent browser scroll anchoring jumps */
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 16px;
             min-height: 0;
-            scroll-behavior: smooth;
+            scroll-behavior: auto;
             display: flex;
             flex-direction: column;
-        }
-
-        .messages-container::before {
-            content: '';
-            flex: 1;
-            min-height: 0;
         }
 
         /* Custom Scrollbar */
@@ -1314,7 +1309,46 @@
             max-width: 100%;
             height: auto;
         }
-    </style>
+    
+        /* Prevent browser scroll anchoring jumps */
+        #messagesContainer { overflow-anchor: none; }
+
+        /* ================================
+           Auto-hide scrollbar (NO LAYOUT SHIFT)
+           - Does NOT use :hover (so bubbles won't resize)
+           - Scrollbar appears only while actually scrolling
+           ================================ */
+
+        /* Reserve gutter so content width never changes */
+        .messages-container{
+            scrollbar-gutter: stable;
+        }
+
+        /* Firefox: keep gutter stable and hide thumb until scrolling */
+        .messages-container{
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent; /* thumb track */
+        }
+        .messages-container.scrolling{
+            scrollbar-color: rgba(120, 120, 120, 0.45) transparent;
+        }
+
+        /* WebKit: keep scrollbar width constant, but hide thumb until scrolling */
+        .messages-container::-webkit-scrollbar{
+            width: 8px;  /* constant width -> no reflow */
+        }
+        .messages-container::-webkit-scrollbar-track{
+            background: transparent;
+        }
+        .messages-container::-webkit-scrollbar-thumb{
+            background-color: transparent; /* hidden by default */
+            border-radius: 10px;
+        }
+        .messages-container.scrolling::-webkit-scrollbar-thumb{
+            background-color: rgba(120, 120, 120, 0.45);
+        }
+
+</style>
 </head>
 <body class="light-mode">
     <div id="app"></div>
@@ -1403,6 +1437,24 @@
         };
 
         // Utility Functions
+
+        // Auto-hide scrollbar: show only while actually scrolling (no hover)
+        function attachScrollbarAutoHide() {
+            const el = document.querySelector('.messages-container');
+            if (!el) return;
+            if (el.dataset.scrollHideAttached === '1') return;
+            el.dataset.scrollHideAttached = '1';
+
+            let t = null;
+            el.addEventListener('scroll', () => {
+                el.classList.add('scrolling');
+                if (t) clearTimeout(t);
+                t = setTimeout(() => {
+                    el.classList.remove('scrolling');
+                }, 700);
+            }, { passive: true });
+        }
+
         function generateUUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 const r = Math.random() * 16 | 0;
@@ -2839,99 +2891,118 @@
         function render() {
             const app = document.getElementById('app');
 
-            // Save scroll position before render
-            let savedScrollPosition = 0;
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (messagesContainer && !state.shouldAutoScroll) {
-                savedScrollPosition = messagesContainer.scrollTop;
+            // --- WhatsApp-style scroll preservation ---
+            // If user is near bottom, keep them pinned to bottom after re-render.
+            // If user scrolled up, keep their view anchored even if height changes.
+            const oldContainer = document.getElementById('messagesContainer');
+            let wasNearBottom = true;
+            let oldScrollTop = 0;
+            let oldScrollHeight = 0;
+
+            if (oldContainer && state.currentPage === 'chat') {
+                oldScrollTop = oldContainer.scrollTop;
+                oldScrollHeight = oldContainer.scrollHeight;
+
+                const threshold = 140; // px: "near bottom" distance
+                const distanceFromBottom = oldContainer.scrollHeight - oldContainer.scrollTop - oldContainer.clientHeight;
+                wasNearBottom = distanceFromBottom <= threshold;
+            }
+
+            // If we're actively sending or explicitly requested, pin to bottom
+            if (state.isSending || state.shouldAutoScroll) {
+                wasNearBottom = true;
             }
 
             if (!state.isLoggedIn) {
                 app.innerHTML = renderLogin();
-            } else {
-                app.innerHTML = `
-                    <div class="app-layout">
-                        ${renderSidebar()}
-                        <div class="container">
-                            <div class="header">
-                                <div class="header-title">Accounts-AI</div>
-                                <div class="header-buttons">
-                                    <button class="reset-job-button" onclick="handleResetJob()">Reset Job</button>
-                                    <button class="tab-button ${state.currentPage === 'chat' ? 'active' : ''}" onclick="setCurrentPage('chat')" title="Chat">
-                                        <i class="fa-solid fa-comments"></i>
-                                    </button>
-                                    <button class="tab-button ${state.currentPage === 'reports' ? 'active' : ''}" onclick="setCurrentPage('reports')" title="Reports">
-                                        <i class="fa-solid fa-chart-bar"></i>
-                                    </button>
-                                    <button class="tab-button ${state.currentPage === 'settings' ? 'active' : ''}" onclick="setCurrentPage('settings')" title="Settings">
-                                        <i class="fa-solid fa-gear"></i>
-                                    </button>
-                                </div>
+                return;
+            }
+
+            app.innerHTML = `
+                <div class="app-layout">
+                    ${renderSidebar()}
+                    <div class="container">
+                        <div class="header">
+                            <div class="header-title">Accounts-AI</div>
+                            <div class="header-buttons">
+                                <button class="reset-job-button" onclick="handleResetJob()">Reset Job</button>
+                                <button class="tab-button ${state.currentPage === 'chat' ? 'active' : ''}" onclick="setCurrentPage('chat')" title="Chat">
+                                    <i class="fa-solid fa-comments"></i>
+                                </button>
+                                <button class="tab-button ${state.currentPage === 'reports' ? 'active' : ''}" onclick="setCurrentPage('reports')" title="Reports">
+                                    <i class="fa-solid fa-chart-bar"></i>
+                                </button>
+                                <button class="tab-button ${state.currentPage === 'settings' ? 'active' : ''}" onclick="setCurrentPage('settings')" title="Settings">
+                                    <i class="fa-solid fa-gear"></i>
+                                </button>
                             </div>
-                            <div class="main-content">
-                                ${renderMain()}
+                        </div>
+                        <div class="main-content">
+                            ${renderMain()}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Viewer Modal -->
+                <div id="pdfViewerModal" class="pdf-viewer-modal">
+                    <div class="pdf-viewer-container">
+                        <div class="pdf-viewer-header">
+                            <div class="pdf-viewer-title" id="pdfViewerTitle">PDF Viewer</div>
+                            <div class="pdf-viewer-controls">
+                                <button class="pdf-nav-button" id="pdfPrevButton" onclick="previousPDFPage()">
+                                    <i class="fa-solid fa-chevron-left"></i> Previous
+                                </button>
+                                <span class="pdf-page-info" id="pdfPageInfo">Page 1 of 1</span>
+                                <button class="pdf-nav-button" id="pdfNextButton" onclick="nextPDFPage()">
+                                    Next <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="pdf-close-button" onclick="closePDFViewer()">
+                                    <i class="fa-solid fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pdf-viewer-content" id="pdfViewerContent">
+                            <div class="pdf-canvas-container">
+                                <canvas id="pdfCanvas"></canvas>
                             </div>
                         </div>
                     </div>
+                </div>
+            `;
 
-                    <!-- PDF Viewer Modal -->
-                    <div id="pdfViewerModal" class="pdf-viewer-modal">
-                        <div class="pdf-viewer-container">
-                            <div class="pdf-viewer-header">
-                                <div class="pdf-viewer-title" id="pdfViewerTitle">PDF Viewer</div>
-                                <div class="pdf-viewer-controls">
-                                    <button class="pdf-nav-button" id="pdfPrevButton" onclick="previousPDFPage()">
-                                        <i class="fa-solid fa-chevron-left"></i> Previous
-                                    </button>
-                                    <span class="pdf-page-info" id="pdfPageInfo">Page 1 of 1</span>
-                                    <button class="pdf-nav-button" id="pdfNextButton" onclick="nextPDFPage()">
-                                        Next <i class="fa-solid fa-chevron-right"></i>
-                                    </button>
-                                    <button class="pdf-close-button" onclick="closePDFViewer()">
-                                        <i class="fa-solid fa-times"></i> Close
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="pdf-viewer-content" id="pdfViewerContent">
-                                <div class="pdf-canvas-container">
-                                    <canvas id="pdfCanvas"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            // --- Restore chat scroll AFTER DOM is rebuilt ---
+            if (state.currentPage === 'chat') {
+                const restoreScroll = () => {
+                    const newContainer = document.getElementById('messagesContainer');
+                    if (!newContainer) return;
 
-                if (state.currentPage === 'chat') {
-                    const messagesContainer = document.getElementById('messagesContainer');
-                    if (messagesContainer) {
-                        if (state.shouldAutoScroll) {
-                            // Scroll to bottom for new messages
-                            requestAnimationFrame(() => {
-                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                            });
-                            state.shouldAutoScroll = false;
-                        } else if (savedScrollPosition > 0) {
-                            // Restore previous scroll position
-                            messagesContainer.scrollTop = savedScrollPosition;
+                    // Always keep the latest message visible (WhatsApp-style pin)
+                    // If you later want "don't auto-scroll when user scrolls up", we can add a flag.
+                    newContainer.scrollTop = newContainer.scrollHeight;
+
+                    // Reset this flag; scroll behavior is now automatic
+                    state.shouldAutoScroll = false;
+                };
+
+                // Restore immediately (prevents visible jump to top), then re-apply once next frame (catches late layout changes)
+                restoreScroll();
+                setTimeout(restoreScroll, 0);
+
+                const messageInput = document.getElementById('messageInput');
+                if (messageInput && !state.isSending) {
+                    messageInput.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                    });
+
+                    messageInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && !state.isSending) {
+                            e.preventDefault();
+                            handleSendClick();
                         }
-                    }
+                    });
 
-                    const messageInput = document.getElementById('messageInput');
-                    if (messageInput && !state.isSending) {
-                        messageInput.addEventListener('input', function() {
-                            this.style.height = 'auto';
-                            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-                        });
-
-                        messageInput.addEventListener('keydown', (e) => {
-                            if (e.key === 'Enter' && !e.shiftKey && !state.isSending) {
-                                e.preventDefault();
-                                handleSendClick();
-                            }
-                        });
-
-                        messageInput.focus();
-                    }
+                    messageInput.focus();
                 }
             }
         }
