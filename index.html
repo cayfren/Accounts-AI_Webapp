@@ -2213,15 +2213,9 @@
 
             const url = message.file.url;
             const filename = message.file.name;
-            const contentType = message.file.mime || message.file.content_type || '';
 
-            // Check if it's a PDF
-            const isPDF = contentType.includes('pdf') || filename.toLowerCase().endsWith('.pdf');
-
-            if (isPDF && (url.startsWith('data:') || url.startsWith('blob:'))) {
-                // Open PDF in the in-app viewer
-                openPDFViewer(url, filename);
-            } else if (url.startsWith('data:')) {
+            // Convert data URL to blob URL and open in new tab
+            if (url.startsWith('data:')) {
                 const byteString = atob(url.split(',')[1]);
                 const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
                 const ab = new ArrayBuffer(byteString.length);
@@ -2231,10 +2225,13 @@
                 }
                 const blob = new Blob([ab], { type: mimeString });
                 const blobUrl = URL.createObjectURL(blob);
+                // Open PDF in new tab
                 window.open(blobUrl, '_blank');
             } else if (url.startsWith('blob:')) {
+                // Already a blob URL, open directly in new tab
                 window.open(url, '_blank');
             } else {
+                // Regular URL - download
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
