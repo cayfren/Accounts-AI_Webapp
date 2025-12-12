@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -17,9 +18,20 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+            height: 100%;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #app {
+            height: 100%;
         }
 
         /* Theme Variables - Updated to match React Native */
@@ -193,6 +205,7 @@
             max-width: 100%;
             min-width: 0;
             overflow: hidden;
+            border-radius: 16px;
         }
 
         /* Header - Updated styling */
@@ -395,6 +408,7 @@
             flex-direction: column;
             overflow: hidden;
             min-height: 0;
+            border-radius: 0 0 16px 16px;
         }
 
         /* Chat wrapper - centered */
@@ -402,7 +416,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
             min-height: 0;
@@ -415,6 +429,15 @@
             overflow-y: auto;
             overflow-x: hidden;
             padding: 16px;
+            min-height: 0;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages-container::before {
+            content: '';
+            flex: 1;
             min-height: 0;
         }
 
@@ -456,7 +479,7 @@
         .message-bubble {
             max-width: 70%;
             padding: 12px 16px;
-            border-radius: 12px;
+            border-radius: 18px;
             margin: 8px 0;
             word-wrap: break-word;
         }
@@ -579,6 +602,10 @@
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 20px;
         }
 
         .attach-button {
@@ -592,7 +619,7 @@
 
         .message-input {
             flex: 1;
-            border-radius: 12px;
+            border-radius: 24px;
             padding: 12px 16px;
             font-size: 16px;
             background-color: var(--input-bg);
@@ -607,9 +634,45 @@
             line-height: 1.5;
         }
 
+        /* Message Input Scrollbar - Dark themed */
+        .message-input::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .message-input::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .message-input::-webkit-scrollbar-thumb {
+            background-color: rgba(100, 100, 100, 0.5);
+            border-radius: 10px;
+        }
+
+        body.dark-mode .message-input::-webkit-scrollbar-thumb {
+            background-color: rgba(80, 80, 80, 0.6);
+        }
+
+        .message-input::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(120, 120, 120, 0.7);
+        }
+
+        body.dark-mode .message-input::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(100, 100, 100, 0.8);
+        }
+
+        /* Firefox Scrollbar for message input */
+        .message-input {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+        }
+
+        body.dark-mode .message-input {
+            scrollbar-color: rgba(80, 80, 80, 0.6) transparent;
+        }
+
         .send-button {
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 16px;
             background-color: var(--accent);
             color: white;
             border: none;
@@ -1195,6 +1258,116 @@
         #fileInput {
             display: none;
         }
+
+        /* PDF Viewer Modal */
+        .pdf-viewer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .pdf-viewer-modal.active {
+            display: flex;
+        }
+
+        .pdf-viewer-container {
+            background-color: var(--card);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1200px;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .pdf-viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--card);
+        }
+
+        .pdf-viewer-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pdf-viewer-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .pdf-page-info {
+            font-size: 14px;
+            color: var(--subtext);
+            white-space: nowrap;
+        }
+
+        .pdf-nav-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text);
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .pdf-nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pdf-close-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .pdf-viewer-content {
+            flex: 1;
+            overflow: auto;
+            background-color: #525252;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .pdf-canvas-container {
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        #pdfCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body class="light-mode">
@@ -1202,12 +1375,17 @@
 
     <script>
         // Constants
-        const WEBHOOK_URL = "https://groovier-gideon-nonsuccessive.ngrok-free.dev/webhook/dfa3427f-710e-4840-bcb5-53a1eeabddda";
+        const WEBHOOK_URL = "http://localhost:5678/webhook-test/dfa3427f-710e-4840-bcb5-53a1eeabddda";
         const CREDENTIALS = {
             USERNAME: "Admin",
             PASSWORD: "0000"
         };
         const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+        // PDF.js Configuration
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
 
         const SIDEBAR_REPORTS = [
             { id: "invoices", icon: "fa-file-invoice", iconColor: "#3B82F6", label: "Invoices Issued", apiName: "Invoices Issued" },
@@ -1267,7 +1445,14 @@
             emailScannerFiles: [],
             emailFromDate: '',
             emailToDate: '',
-            isLoadingEmailFiles: false
+            isLoadingEmailFiles: false,
+            pdfViewer: {
+                isOpen: false,
+                pdfDoc: null,
+                currentPage: 1,
+                totalPages: 0,
+                fileName: ''
+            }
         };
 
         // Utility Functions
@@ -2118,8 +2303,15 @@
 
             const url = message.file.url;
             const filename = message.file.name;
+            const contentType = message.file.mime || message.file.content_type || '';
 
-            if (url.startsWith('data:')) {
+            // Check if it's a PDF
+            const isPDF = contentType.includes('pdf') || filename.toLowerCase().endsWith('.pdf');
+
+            if (isPDF && (url.startsWith('data:') || url.startsWith('blob:'))) {
+                // Open PDF in the in-app viewer
+                openPDFViewer(url, filename);
+            } else if (url.startsWith('data:')) {
                 const byteString = atob(url.split(',')[1]);
                 const mimeString = url.split(',')[0].split(':')[1].split(';')[0];
                 const ab = new ArrayBuffer(byteString.length);
@@ -2138,6 +2330,117 @@
                 a.download = filename;
                 a.click();
             }
+        }
+
+        // PDF Viewer Functions
+        async function openPDFViewer(url, filename) {
+            try {
+                let pdfData;
+
+                if (url.startsWith('data:')) {
+                    // Convert data URL to Uint8Array
+                    const base64 = url.split(',')[1];
+                    const binaryString = atob(base64);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    pdfData = bytes;
+                } else if (url.startsWith('blob:')) {
+                    // Fetch blob URL
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    pdfData = new Uint8Array(arrayBuffer);
+                }
+
+                // Load PDF document
+                const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                const pdfDoc = await loadingTask.promise;
+
+                // Update state
+                state.pdfViewer.pdfDoc = pdfDoc;
+                state.pdfViewer.totalPages = pdfDoc.numPages;
+                state.pdfViewer.currentPage = 1;
+                state.pdfViewer.fileName = filename;
+                state.pdfViewer.isOpen = true;
+
+                // Show modal
+                const modal = document.getElementById('pdfViewerModal');
+                if (modal) {
+                    modal.classList.add('active');
+                }
+
+                // Render first page
+                await renderPDFPage(1);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('Failed to load PDF. Please try again.');
+            }
+        }
+
+        async function renderPDFPage(pageNum) {
+            if (!state.pdfViewer.pdfDoc) return;
+
+            try {
+                const page = await state.pdfViewer.pdfDoc.getPage(pageNum);
+                const canvas = document.getElementById('pdfCanvas');
+                const context = canvas.getContext('2d');
+
+                // Calculate scale to fit container
+                const viewport = page.getViewport({ scale: 1 });
+                const container = document.getElementById('pdfViewerContent');
+                const containerWidth = container.clientWidth - 40;
+                const scale = containerWidth / viewport.width;
+                const scaledViewport = page.getViewport({ scale: scale });
+
+                // Set canvas dimensions
+                canvas.height = scaledViewport.height;
+                canvas.width = scaledViewport.width;
+
+                // Render PDF page
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: scaledViewport
+                };
+                await page.render(renderContext).promise;
+
+                // Update UI
+                document.getElementById('pdfViewerTitle').textContent = state.pdfViewer.fileName;
+                document.getElementById('pdfPageInfo').textContent = `Page ${pageNum} of ${state.pdfViewer.totalPages}`;
+                document.getElementById('pdfPrevButton').disabled = pageNum <= 1;
+                document.getElementById('pdfNextButton').disabled = pageNum >= state.pdfViewer.totalPages;
+
+                state.pdfViewer.currentPage = pageNum;
+            } catch (error) {
+                console.error('Error rendering PDF page:', error);
+            }
+        }
+
+        function previousPDFPage() {
+            if (state.pdfViewer.currentPage > 1) {
+                renderPDFPage(state.pdfViewer.currentPage - 1);
+            }
+        }
+
+        function nextPDFPage() {
+            if (state.pdfViewer.currentPage < state.pdfViewer.totalPages) {
+                renderPDFPage(state.pdfViewer.currentPage + 1);
+            }
+        }
+
+        function closePDFViewer() {
+            const modal = document.getElementById('pdfViewerModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+
+            // Clean up
+            state.pdfViewer.pdfDoc = null;
+            state.pdfViewer.currentPage = 1;
+            state.pdfViewer.totalPages = 0;
+            state.pdfViewer.fileName = '';
+            state.pdfViewer.isOpen = false;
         }
 
         // Email Scanner Functions
@@ -2615,9 +2918,9 @@
                     <div class="messages-container" id="messagesContainer">
                         ${renderMessages()}
                     </div>
-                    <div class="input-container">
-                        ${renderInputArea()}
-                    </div>
+                </div>
+                <div class="input-container">
+                    ${renderInputArea()}
                 </div>
             `;
         }
@@ -2649,6 +2952,32 @@
                             </div>
                             <div class="main-content">
                                 ${renderMain()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Viewer Modal -->
+                    <div id="pdfViewerModal" class="pdf-viewer-modal">
+                        <div class="pdf-viewer-container">
+                            <div class="pdf-viewer-header">
+                                <div class="pdf-viewer-title" id="pdfViewerTitle">PDF Viewer</div>
+                                <div class="pdf-viewer-controls">
+                                    <button class="pdf-nav-button" id="pdfPrevButton" onclick="previousPDFPage()">
+                                        <i class="fa-solid fa-chevron-left"></i> Previous
+                                    </button>
+                                    <span class="pdf-page-info" id="pdfPageInfo">Page 1 of 1</span>
+                                    <button class="pdf-nav-button" id="pdfNextButton" onclick="nextPDFPage()">
+                                        Next <i class="fa-solid fa-chevron-right"></i>
+                                    </button>
+                                    <button class="pdf-close-button" onclick="closePDFViewer()">
+                                        <i class="fa-solid fa-times"></i> Close
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pdf-viewer-content" id="pdfViewerContent">
+                                <div class="pdf-canvas-container">
+                                    <canvas id="pdfCanvas"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
