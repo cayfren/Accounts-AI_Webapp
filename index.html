@@ -1398,7 +1398,8 @@
                 currentPage: 1,
                 totalPages: 0,
                 fileName: ''
-            }
+            },
+            shouldAutoScroll: false
         };
 
         // Utility Functions
@@ -1656,6 +1657,7 @@
                     timestamp: new Date().toISOString()
                 }];
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             }
         }
@@ -1685,6 +1687,7 @@
                     timestamp: new Date().toISOString()
                 });
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             }
         }
@@ -1708,12 +1711,13 @@
                 };
                 state.messages.push(loadingMessage);
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
 
                 // Inject white background into body CSS to prevent gray rendering
                 htmlContent = htmlContent.replace(
                     /body\s*\{([^}]*)\}/,
-                    'body { $1 background-color: #ffffff;'
+                    'body { $1 background-color: #ffffff; }'
                 );
 
                 const tempContainer = document.createElement('div');
@@ -1751,6 +1755,7 @@
 
                 state.messages.push(botMessage);
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             } catch (error) {
                 console.error("PDF conversion error:", error);
@@ -1762,6 +1767,7 @@
                     timestamp: new Date().toISOString()
                 });
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             }
         }
@@ -1789,6 +1795,7 @@
                     invoice_id: data.invoice_id
                 };
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
                 return;
             }
@@ -1821,6 +1828,7 @@
 
                 state.messages.push(botMessage);
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
                 return;
             }
@@ -1848,6 +1856,7 @@
 
                 state.messages.push(botMessage);
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             }
         }
@@ -1893,6 +1902,7 @@
                     timestamp: new Date().toISOString()
                 });
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             } finally {
                 state.isSending = false;
@@ -1944,6 +1954,7 @@
                     timestamp: new Date().toISOString()
                 });
                 saveToStorage('messages', state.messages);
+                state.shouldAutoScroll = true;
                 render();
             } finally {
                 state.pendingConfirmation = null;
@@ -2883,8 +2894,9 @@
 
                 if (state.currentPage === 'chat') {
                     const messagesContainer = document.getElementById('messagesContainer');
-                    if (messagesContainer) {
+                    if (messagesContainer && state.shouldAutoScroll) {
                         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        state.shouldAutoScroll = false;
                     }
 
                     const messageInput = document.getElementById('messageInput');
