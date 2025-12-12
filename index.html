@@ -1715,10 +1715,12 @@
                 render();
 
                 // Inject white background into body CSS to prevent gray rendering
-                htmlContent = htmlContent.replace(
-                    /body\s*\{([^}]*)\}/,
-                    'body { $1 background-color: #ffffff; }'
-                );
+                if (htmlContent.includes('<style>')) {
+                    htmlContent = htmlContent.replace(
+                        '<style>',
+                        '<style>body { background-color: #ffffff !important; } '
+                    );
+                }
 
                 const tempContainer = document.createElement('div');
                 tempContainer.innerHTML = htmlContent;
@@ -2837,6 +2839,13 @@
         function render() {
             const app = document.getElementById('app');
 
+            // Save scroll position before render
+            let savedScrollPosition = 0;
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer && !state.shouldAutoScroll) {
+                savedScrollPosition = messagesContainer.scrollTop;
+            }
+
             if (!state.isLoggedIn) {
                 app.innerHTML = renderLogin();
             } else {
@@ -2894,9 +2903,17 @@
 
                 if (state.currentPage === 'chat') {
                     const messagesContainer = document.getElementById('messagesContainer');
-                    if (messagesContainer && state.shouldAutoScroll) {
-                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        state.shouldAutoScroll = false;
+                    if (messagesContainer) {
+                        if (state.shouldAutoScroll) {
+                            // Scroll to bottom for new messages
+                            requestAnimationFrame(() => {
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            });
+                            state.shouldAutoScroll = false;
+                        } else if (savedScrollPosition > 0) {
+                            // Restore previous scroll position
+                            messagesContainer.scrollTop = savedScrollPosition;
+                        }
                     }
 
                     const messageInput = document.getElementById('messageInput');
