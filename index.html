@@ -511,59 +511,6 @@
             text-align: right;
         }
 
-        /* HTML Message in Chat */
-        .html-message-container {
-            width: 95%;
-            max-width: 700px;
-            height: 500px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background-color: var(--card);
-            margin: 12px 0;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .html-message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .html-message-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text);
-            flex: 1;
-        }
-
-        .html-export-button {
-            padding: 8px 12px;
-            border-radius: 8px;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .html-message-content {
-            flex: 1;
-            border-radius: 8px;
-            overflow: auto;
-            background-color: #FFFFFF;
-        }
-
-        .html-message-content iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 8px;
-        }
-
         .download-button {
             padding: 6px 10px;
             border-radius: 6px;
@@ -1375,7 +1322,7 @@
 
     <script>
         // Constants
-        const WEBHOOK_URL = "https://groovier-gideon-nonsuccessive.ngrok-free.dev/webhook/dfa3427f-710e-4840-bcb5-53a1eeabddda";
+        const WEBHOOK_URL = "http://localhost:5678/webhook-test/dfa3427f-710e-4840-bcb5-53a1eeabddda";
         const CREDENTIALS = {
             USERNAME: "Admin",
             PASSWORD: "0000"
@@ -1814,31 +1761,6 @@
             }
         }
 
-        // Export HTML message to PDF
-        async function exportHtmlMessageToPDF(html, messageId) {
-            try {
-                const tempContainer = document.createElement('div');
-                tempContainer.innerHTML = html;
-                tempContainer.style.padding = '20px';
-                tempContainer.style.backgroundColor = '#ffffff';
-                tempContainer.style.color = '#000000';
-
-                const opt = {
-                    margin: 10,
-                    filename: `Report_${Date.now()}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                await html2pdf().set(opt).from(tempContainer).save();
-                alert("PDF exported successfully!");
-            } catch (error) {
-                console.error("PDF export error:", error);
-                alert("Failed to export PDF. Please try again.");
-            }
-        }
-
         // Bot Response Handler
         function handleBotResponse(data) {
             console.log("Bot response:", data);
@@ -1866,20 +1788,9 @@
                 return;
             }
 
-            // HTML RESPONSE (for chat)
+            // HTML TO PDF RESPONSE
             if (data.html && typeof data.html === 'string') {
-                const botMessage = {
-                    id: generateUUID(),
-                    role: 'bot',
-                    type: 'html',
-                    text: data.report_name || 'Report generated',
-                    html: data.html,
-                    timestamp: new Date().toISOString()
-                };
-
-                state.messages.push(botMessage);
-                saveToStorage('messages', state.messages);
-                render();
+                convertHTMLToPDF(data.html, data.report_name || 'Report');
                 return;
             }
 
@@ -2632,42 +2543,27 @@
         function renderMessages() {
             let messagesHtml = '';
             state.messages.forEach(msg => {
-                if (msg.type === 'html' && msg.html) {
-                    messagesHtml += `
-                        <div class="html-message-container">
-                            <div class="html-message-header">
-                                <div class="html-message-title">📊 ${escapeHtml(msg.text || 'Report')}</div>
-                                <button class="html-export-button" onclick="exportHtmlMessageToPDF(\`${msg.html.replace(/`/g, '\\`')}\`, '${msg.id}')">Export PDF</button>
-                            </div>
-                            <div class="html-message-content">
-                                <iframe srcdoc="${msg.html.replace(/"/g, '&quot;')}"></iframe>
-                            </div>
-                            <div class="timestamp" style="text-align: right;">${formatTime(msg.timestamp)}</div>
-                        </div>
-                    `;
-                } else {
-                    const bubbleClass = msg.role === 'user' ? 'user' : 'bot';
-                    messagesHtml += `<div class="message-bubble ${bubbleClass}">`;
+                const bubbleClass = msg.role === 'user' ? 'user' : 'bot';
+                messagesHtml += `<div class="message-bubble ${bubbleClass}">`;
 
-                    if (msg.type === 'text' && msg.text) {
-                        messagesHtml += `<div class="message-text">${escapeHtml(msg.text)}</div>`;
-                    }
-
-                    if (msg.type === 'file' && msg.file) {
-                        const icon = msg.role === 'user' ? '<i class="fa-solid fa-paperclip"></i>' : '<i class="fa-solid fa-file-pdf"></i>';
-                        messagesHtml += `<div class="message-text">${icon} ${escapeHtml(msg.file.name)}</div>`;
-                        if (msg.text && msg.text !== msg.file.name) {
-                            messagesHtml += `<div class="message-text" style="margin-top: 4px;">${escapeHtml(msg.text)}</div>`;
-                        }
-                        if (msg.file.url) {
-                            const buttonText = (msg.file.url.startsWith('data:') || msg.file.url.startsWith('blob:')) ? 'View PDF' : 'Download';
-                            messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.id}')">${buttonText}</button>`;
-                        }
-                    }
-
-                    messagesHtml += `<div class="timestamp">${formatTime(msg.timestamp)}</div>`;
-                    messagesHtml += `</div>`;
+                if (msg.type === 'text' && msg.text) {
+                    messagesHtml += `<div class="message-text">${escapeHtml(msg.text)}</div>`;
                 }
+
+                if (msg.type === 'file' && msg.file) {
+                    const icon = msg.role === 'user' ? '<i class="fa-solid fa-paperclip"></i>' : '<i class="fa-solid fa-file-pdf"></i>';
+                    messagesHtml += `<div class="message-text">${icon} ${escapeHtml(msg.file.name)}</div>`;
+                    if (msg.text && msg.text !== msg.file.name) {
+                        messagesHtml += `<div class="message-text" style="margin-top: 4px;">${escapeHtml(msg.text)}</div>`;
+                    }
+                    if (msg.file.url) {
+                        const buttonText = (msg.file.url.startsWith('data:') || msg.file.url.startsWith('blob:')) ? 'View PDF' : 'Download';
+                        messagesHtml += `<button class="download-button" onclick="downloadFile('${msg.id}')">${buttonText}</button>`;
+                    }
+                }
+
+                messagesHtml += `<div class="timestamp">${formatTime(msg.timestamp)}</div>`;
+                messagesHtml += `</div>`;
             });
 
             if (state.isSending && !state.isConfirmationMode) {
