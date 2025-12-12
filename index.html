@@ -1697,6 +1697,43 @@
         }
 
         // Convert HTML to PDF
+        /**
+         * IMPORTANT: HTML Report Styling Requirements
+         * ============================================
+         * When generating HTML reports on the backend, ALWAYS use inline styles for ALL colors
+         * and backgrounds directly on each element. Do NOT rely on CSS classes or external stylesheets.
+         *
+         * The HTML must be completely self-contained so it renders correctly regardless of the
+         * environment, theme (light/dark mode), or display context.
+         *
+         * Example:
+         * ✓ GOOD: <div style="background-color: #ffffff; color: #000000; padding: 10px;">
+         * ✗ BAD:  <div class="report-header">
+         */
+
+        // Ensure HTML reports have proper inline styles for theme-independent rendering
+        function ensureInlineStyles(htmlContent) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+
+            // Apply inline styles to ensure consistent rendering
+            const allElements = tempDiv.querySelectorAll('*');
+            allElements.forEach(element => {
+                // Ensure text is dark on light background for readability
+                if (!element.style.color && element.tagName !== 'TABLE') {
+                    element.style.color = '#000000';
+                }
+                // Ensure backgrounds are defined
+                if (element.tagName === 'TABLE' || element.tagName === 'TH' || element.tagName === 'TD') {
+                    if (!element.style.backgroundColor) {
+                        element.style.backgroundColor = '#ffffff';
+                    }
+                }
+            });
+
+            return tempDiv.innerHTML;
+        }
+
         async function convertHTMLToPDF(htmlContent, reportName) {
             try {
                 const loadingMessage = {
@@ -1710,8 +1747,11 @@
                 saveToStorage('messages', state.messages);
                 render();
 
+                // Ensure HTML has inline styles for theme-independent rendering
+                const styledContent = ensureInlineStyles(htmlContent);
+
                 const tempContainer = document.createElement('div');
-                tempContainer.innerHTML = htmlContent;
+                tempContainer.innerHTML = styledContent;
                 tempContainer.style.padding = '20px';
                 tempContainer.style.backgroundColor = '#ffffff';
                 tempContainer.style.color = '#000000';
